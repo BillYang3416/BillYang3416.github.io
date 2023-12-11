@@ -120,7 +120,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
@@ -159,7 +159,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/22/My-new-Post/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/01/03/docker-image/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -177,7 +177,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/03/22/My-new-Post/" class="post-title-link" itemprop="url">My new Post</a>
+          <a href="/2023/01/03/docker-image/" class="post-title-link" itemprop="url">Docker Image</a>
         </h2>
 
         <div class="post-meta-container">
@@ -188,7 +188,14 @@
       </span>
       <span class="post-meta-item-text">發表於</span>
 
-      <time title="創建時間：2022-03-22 22:59:26" itemprop="dateCreated datePublished" datetime="2022-03-22T22:59:26+08:00">2022-03-22</time>
+      <time title="創建時間：2023-01-03 11:34:42" itemprop="dateCreated datePublished" datetime="2023-01-03T11:34:42+08:00">2023-01-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-12 07:37:43" itemprop="dateModified" datetime="2023-12-12T07:37:43+08:00">2023-12-12</time>
     </span>
 
   
@@ -201,7 +208,388 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          
+          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>何謂Image</li>
+</ul>
+<h2 id="何謂Image"><a href="#何謂Image" class="headerlink" title="何謂Image"></a>何謂Image</h2><p>Ref: </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://cwhu.medium.com/docker-tutorial-101-c3808b899ac6">Docker Intro</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/16047306/how-is-docker-different-from-a-virtual-machine#">Docker V.S. VM</a></li>
+</ul>
+<h2 id="Image-Layers"><a href="#Image-Layers" class="headerlink" title="Image Layers"></a>Image Layers</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image <span class="built_in">history</span></span><br></pre></td></tr></table></figure>
+
+<p>因為Image Layer的關係，所以不會儲存相同層的image data。<br>而一個image可能會有幾層layer</p>
+<ul>
+<li>env</li>
+<li>apt</li>
+<li>ubuntu</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image insepct</span><br></pre></td></tr></table></figure>
+<p>查看image的資訊</p>
+<h2 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h2><p>Ref: <a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10191016?sc=hot">Dockerfile</a><br>Ref: <a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10192519">Build image</a></p>
+<h2 id="Container-lifetime-amp-Persistent-data"><a href="#Container-lifetime-amp-Persistent-data" class="headerlink" title="Container lifetime &amp; Persistent data"></a>Container lifetime &amp; Persistent data</h2><p>Container are usually immutable</p>
+<h3 id="Volumes"><a href="#Volumes" class="headerlink" title="Volumes"></a>Volumes</h3><p>Persistent Data </p>
+<ul>
+<li><p>建立mysql container</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True  mysql</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看container資訊的volumes &amp; mounts</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container inspect mysql</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看volumes</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume inspect [:<span class="built_in">id</span> || :name]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>當建立新的container還是使用舊的資料，可以加上 -v 指定volume和mounts</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql-db:/var/lib/mysql  mysql</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>建立volume</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="Bind-Mounts"><a href="#Bind-Mounts" class="headerlink" title="Bind Mounts"></a>Bind Mounts</h3><p>location of data<br>可以和本機共享檔案</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name nginx</span><br><span class="line">%<span class="built_in">cd</span>%:/usr/share/nginx/html nginx</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="built_in">exec</span> -it nginx bash</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/12/23/javascript-scoping-intro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/12/23/javascript-scoping-intro/" class="post-title-link" itemprop="url">Javascript Scoping Intro</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-12-23 17:30:17" itemprop="dateCreated datePublished" datetime="2022-12-23T17:30:17+08:00">2022-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-12 07:37:43" itemprop="dateModified" datetime="2023-12-12T07:37:43+08:00">2023-12-12</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>甚麼是 Scope </li>
+<li>3種型態的Scope</li>
+<li>Scope chain</li>
+<li>Lexical Environment</li>
+<li>Lexical Scoping</li>
+</ul>
+<h2 id="甚麼是-Scope"><a href="#甚麼是-Scope" class="headerlink" title="甚麼是 Scope"></a>甚麼是 Scope</h2><p>Scope 可以翻成 作用域，也就是指「變數如何被存取」，能用下面兩個問題來概括解釋。</p>
+<blockquote>
+<p>Where do variables live? </p>
+</blockquote>
+<blockquote>
+<p>Where can we access a certain variable? </p>
+</blockquote>
+<h2 id="3種型態的-Scope"><a href="#3種型態的-Scope" class="headerlink" title="3種型態的 Scope"></a>3種型態的 Scope</h2><ul>
+<li><p>Global Scope<br>全域變數，除了 Function Scope 和 Block Scope 所定義的變數，都在此範圍</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="number">1234</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">global</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(test);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Function Scope<br>在函式中宣告的變數，只能在函式中取用</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">test</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> a1 = <span class="number">1234</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(a1); <span class="comment">// ReferenceError: a1 is not defined</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Block Scope<br>Block 指的是被大括號包起來的範圍，被宣告的變數只能在此範圍中存取</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> b1 = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">test</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span>(b1) &#123;</span><br><span class="line">      <span class="keyword">let</span> a1 = <span class="number">1234</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(a1); <span class="comment">// ReferenceError: a1 is not defined</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="Lexical-Scoping-和-Scope-Chain"><a href="#Lexical-Scoping-和-Scope-Chain" class="headerlink" title="Lexical Scoping 和 Scope Chain"></a>Lexical Scoping 和 Scope Chain</h2><p>Lexical Scoping 可以翻成「語彙範疇」，也就是指函式和Block的擺放位置，<br>變數能不能被取用是由擺放位置來決定，而不是函式呼叫的順序。</p>
+<p>至於 Scope Chain 則會依據 Lexical Scoping 來決定說，<br>變數能否向上尋找和取用(Variable Lookup)，<br>很重要的一點，外層Scope不能存取內層的Scope的變數，只會為單向取用。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> a1 = <span class="number">1234</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fun1</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> a2 = <span class="number">5678</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">function</span> <span class="title function_">fun2</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(a2); <span class="comment">// 5678</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">fun2</span>();</span><br><span class="line">    <span class="title function_">fun3</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fun3</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(a1);</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(a2); <span class="comment">// ReferenceError: a2 is not defined</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="title function_">fun1</span>();</span><br></pre></td></tr></table></figure>
+
+<img src="/2022/12/23/javascript-scoping-intro/scope-chain.png" class="" title="Scope Chain">
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/12/23/javascript-execution-context/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/12/23/javascript-execution-context/" class="post-title-link" itemprop="url">Javascript Execution Context</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-12-23 15:49:48" itemprop="dateCreated datePublished" datetime="2022-12-23T15:49:48+08:00">2022-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-12 07:37:43" itemprop="dateModified" datetime="2023-12-12T07:37:43+08:00">2023-12-12</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>甚麼是執行環境 execution context</li>
+<li>程式碼範例</li>
+</ul>
+<h2 id="甚麼是執行環境-execution-context"><a href="#甚麼是執行環境-execution-context" class="headerlink" title="甚麼是執行環境 execution context"></a>甚麼是執行環境 execution context</h2><p>所有JS的程式碼都會在執行環境中執行，<br>但只會有一個 Global exection context。<br>而每一個function則會在各自的exection context中執行。<br>因此執行環境可以分成兩種，</p>
+<ul>
+<li>Global Execution context</li>
+<li>Function Execution context</li>
+</ul>
+<p>而每個execution context可分為建立階段和執行階段，</p>
+<ul>
+<li><p>建立階段: 參數和函式宣告式會被裝進execution context</p>
+<ul>
+<li>varialbe environment<ul>
+<li>let, const and var declartion</li>
+<li>functions</li>
+<li>arguments object</li>
+</ul>
+</li>
+<li>scope chain</li>
+<li>this keyword</li>
+</ul>
+</li>
+<li><p>執行階段: 每一個execution context都會被放到call stack，stack會一直往上堆疊，最上面的會先被執行，執行完成後就會被拿掉。</p>
+</li>
+</ul>
+<h2 id="程式碼範例"><a href="#程式碼範例" class="headerlink" title="程式碼範例"></a>程式碼範例</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> a = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">first</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> b = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">const</span> c = <span class="title function_">second</span>();</span><br><span class="line">    <span class="keyword">return</span> b + c;   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">second</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> d = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">return</span> d;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> x = <span class="title function_">first</span>();</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/12/17/Js-Fundamental/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/12/17/Js-Fundamental/" class="post-title-link" itemprop="url">Js Fundamental</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+      
+
+      <time title="創建時間：2022-12-17 15:07:57 / 修改時間：15:46:38" itemprop="dateCreated datePublished" datetime="2022-12-17T15:07:57+08:00">2022-12-17</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="What-is-JavaScript"><a href="#What-is-JavaScript" class="headerlink" title="What is JavaScript"></a>What is JavaScript</h2><ul>
+<li>High level<ul>
+<li>JS 不需要考慮記憶體或資源配置</li>
+</ul>
+</li>
+<li>Garbage collected<ul>
+<li>JS 會自動清除記憶體</li>
+</ul>
+</li>
+<li>Interpreted or just-in-time compiled<ul>
+<li>轉換成 Machine code 在 JS engine</li>
+</ul>
+</li>
+<li>Multi Paradigm<ul>
+<li>Procedural programming</li>
+<li>Object oriented programming (OOP)</li>
+<li>Functional programming (FP)</li>
+</ul>
+</li>
+<li>Prototype-based object oriented</li>
+<li>First-class functions<ul>
+<li>functions 被視為一種 變數</li>
+</ul>
+</li>
+<li>Dynamic<ul>
+<li>弱型別，變數可以在 runtime 改變型別</li>
+</ul>
+</li>
+<li>Single-threaded</li>
+<li>Non-blocking event loop<ul>
+<li>concurrency model 讓 Js engine 掌控多個任務在一個時間</li>
+<li>因為 JS 是走 single thread</li>
+<li>使用 eventloop 讓某些長時間運作的任務，可以在背景執行</li>
+</ul>
+</li>
+</ul>
+<h2 id="JS-Engine"><a href="#JS-Engine" class="headerlink" title="JS Engine"></a>JS Engine</h2><p>Program that executed JS code.<br>Every JS Engine have two kind of things, one is call stack, the other is heap.<br>Stack is execution context is out code get executed.<br>Heap where objects are stored in memory. </p>
+<p>甚麼是 compilation, interpretation<br>compilation 是 source code 先轉化成 machine code ， 會有一個binary file，然後在透過任何方式執行<br>interpretation 是 source coee 每轉一行 machine code 就執行一次 (line by line)</p>
+<p>Modern JS<br>Just-in-time (JIT) compilation<br>Source code也會直接轉化成 Machine code 但不會有檔案產生，並且會被馬上執行</p>
+<h3 id="當有程式碼進到-JS-Engine-流程："><a href="#當有程式碼進到-JS-Engine-流程：" class="headerlink" title="當有程式碼進到 JS Engine 流程："></a>當有程式碼進到 JS Engine 流程：</h3><ul>
+<li>Parsing ( Abstract Syntax Tree )</li>
+<li>Compilation (convert to machine code)</li>
+<li>Execution (發生在 call stack)</li>
+<li>Optimization (在 execution 期間)，增加效能加快速度</li>
+</ul>
+<h2 id="Runtime-in-the-browser"><a href="#Runtime-in-the-browser" class="headerlink" title="Runtime in the browser"></a>Runtime in the browser</h2><ul>
+<li>Js Engine<ul>
+<li>Heap</li>
+<li>Call stack</li>
+</ul>
+</li>
+<li>Web APIs<ul>
+<li>DOME</li>
+<li>Fetch API</li>
+<li>Timers</li>
+</ul>
+</li>
+<li>Callback queue<ul>
+<li>timer</li>
+<li>data</li>
+</ul>
+</li>
+<li>Event loop</li>
+</ul>
+
       
     </div>
 
@@ -310,7 +698,7 @@
 
 <div class="copyright">
   &copy; 
-  <span itemprop="copyrightYear">2022</span>
+  <span itemprop="copyrightYear">2023</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
