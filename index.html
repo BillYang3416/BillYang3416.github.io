@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.1.0">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -18,7 +19,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
 
     <meta name="description" content="技術雜記">
 <meta property="og:type" content="website">
@@ -59,6 +60,9 @@
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
     <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
     </div>
   </div>
 
@@ -80,6 +84,10 @@
 
 
 
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
 
 
 
@@ -120,9 +128,19 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">文章</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
 </div>
@@ -177,7 +195,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/12/12/golang/clean-architecture/" class="post-title-link" itemprop="url">clean-architecture</a>
+          <a href="/2023/12/12/golang/clean-architecture/" class="post-title-link" itemprop="url">Clean Architecture 簡潔架構</a>
         </h2>
 
         <div class="post-meta-container">
@@ -190,6 +208,26 @@
 
       <time title="創建時間：2023-12-12 07:53:07" itemprop="dateCreated datePublished" datetime="2023-12-12T07:53:07+08:00">2023-12-12</time>
     </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-16 14:41:06" itemprop="dateModified" datetime="2023-12-16T14:41:06+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/golang/clean-architecture/" itemprop="url" rel="index"><span itemprop="name">clean architecture</span></a>
+        </span>
+    </span>
 
   
 </div>
@@ -201,7 +239,66 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          
+          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>前言</li>
+<li>使用簡潔架構的優勢</li>
+<li>簡潔架構三原則</li>
+<li>結論</li>
+<li>參考資料</li>
+</ul>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>為甚麼需要軟體架構？<br>Uncle Bob 在書中提到了這個概念，使用軟體架構是為了最小化建置和維護系統時所需要的成本。</p>
+<blockquote>
+<p>“The goal of software architecture is to minimize the human resources required to build and maintain the required system.” ― Robert C. Martin, Clean Architecture</p>
+</blockquote>
+<p>在執行專案時，我們都會希望開發的時程越短越好，但如果在開發時沒有去運用架構，僅僅只是完成需求上的功能就好，就有可能將這些忽略的開發成本無形地轉嫁到後續的維運成本。<br>舉例來說，一個已經上線的專案突然要改變 UI，如果沒有設計好架構，可能就要連動到商業邏輯的修改，導致你在維運階段就需要花更多時間去測試和滿足需求。<br>因此我們會需要了解簡潔架構，簡潔架構會透過三個原則，分別是相依性原則、分層原則和跨層原則來達到關注點分離，也就是說系統核心不會知道外部所使用資料庫、框架和 UI 是甚麼，只需要關注本身的商業邏輯。後續即便有需求變更，也可以更快速聚焦和修改，維運成本也隨之降低。</p>
+<p>要特別提到的是這邊提到的三大原則並沒有在 Clean Architecture 書中所定義，而是先前我在上Teddy的課程中，他對於Clean Architecture全書做的總結，因我覺得這樣能更容易理解簡潔架構，所以在這篇文章中會使用三大原則來說明簡潔架構</p>
+<blockquote>
+<p>來源請參考: <a target="_blank" rel="noopener" href="https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html">https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html</a></p>
+</blockquote>
+<h2 id="使用簡潔架構的優勢"><a href="#使用簡潔架構的優勢" class="headerlink" title="使用簡潔架構的優勢"></a>使用簡潔架構的優勢</h2><ul>
+<li><p>獨立框架</p>
+<p>  將框架當作工具來使用，而工具是可以被替換的，也就是系統內層不會依賴於框架</p>
+</li>
+<li><p>獨立 UI</p>
+<p>  UI的變動不會影響到商業邏輯，因 UI 時常會因滿足客戶需求而進行變動</p>
+</li>
+<li><p>獨立 Database: </p>
+<p>  將資料庫也作為工具使用，舉例來說，原先使用 MySQL，但後續想要改使用 MongoDB 也能直接替換卻不會影響到商業邏輯。套用到其他中間件也是，像是 Message Queue，一樣也能將 kafka 或 RabbitMQ 當作工具來使用</p>
+</li>
+<li><p>獨立外部服務: </p>
+<p>  將商業邏輯與外部系統切開</p>
+</li>
+<li><p>可測試: </p>
+<p>  商業邏輯可以在沒有 UI、資料庫和其他中間件等等的情況下進行測試</p>
+</li>
+</ul>
+<h2 id="簡潔架構三原則"><a href="#簡潔架構三原則" class="headerlink" title="簡潔架構三原則"></a>簡潔架構三原則</h2><p><img src="https://blog.cleancoder.com/uncle-bob/images/2012-08-13-the-clean-architecture/CleanArchitecture.jpg" alt="Clean Architecture"></p>
+<h3 id="分層原則"><a href="#分層原則" class="headerlink" title="分層原則"></a>分層原則</h3><p>那在簡潔架構中，主要我們會分成4層，而每一層都有其負責的用途及功能：</p>
+<ul>
+<li><p>Entitiy</p>
+<p>  商業邏輯層，Entity 可以是一個物件，也可以是一組資料結構，Entity 不會受到外部的影響(像是DB或UI)，關注的重點只有他自己。</p>
+</li>
+<li><p>UseCase</p>
+<p>  使用案例層，系統中所有的使用案例都會封裝在這一層，控制 entities 資料的流動，並在這層透過依賴反轉去操控外部系統 (e.g. DB) 去滿足使用案例。舉例來說，建立、修改及刪除會員都可以個別視為一個 UseCase。</p>
+</li>
+<li><p>Interface Adapter</p>
+<p>  接口轉換層，負責資料的接收和資料格式的轉換。舉例來說，當會員資料透過 RESTful API 傳送到系統，就會由這一層接收，並且做轉換再傳入到 UseCase 層。</p>
+</li>
+<li><p>Framework &amp; Driver</p>
+<p>  負責框架、DB 和外部服務的相關設定及實作</p>
+</li>
+</ul>
+<h3 id="相依性原則"><a href="#相依性原則" class="headerlink" title="相依性原則"></a>相依性原則</h3><p>從上面的圖可以了解到簡潔架構是由四個同心圓組成，而越往內層，層級就越高。最內層是處理商業邏輯的核心，而外層就偏向於處理流程上的機制，因此程式碼的依賴只能由外往內。簡單來說，內層的程式碼不能引入外層的變數、函式或類別等等，這就是相依性原則。</p>
+<h3 id="跨層原則"><a href="#跨層原則" class="headerlink" title="跨層原則"></a>跨層原則</h3><p>簡潔架構在做跨層資料的輸入或輸出時，都會使用基本的資料結構來傳遞，也就是將原先的物件再重新包裝程一個純資料結構的物件再傳送，這樣可以避免違反相依性原則。</p>
+<p>舉例來說，當建立會員時，會先由 Adapter 層接收 Restful API 的請求，而當我們需要調用 UseCase 層去新增會員時，就會需要先建立一個純POJO在UseCase層讓Adapter進行轉換，藉此UseCase層就不會引用到外層的東西。</p>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在以往的開發過程中，如果我們使用MVC架構，因為沒有相依性原則和跨層原則的規範，就會是直接建立實作類別。而在缺少了介面定義的情況下，單元測試就會相對難寫。另外在沒有單元測試的情況下，維護上就容易出現改Ａ壞Ｂ，增加維運的成本。所以我們可以透過簡潔架構來將系統進行分層，將商業邏輯和外部系統、框架做一個解耦，一方面是我們能更彈性的去抽換中間件，另一方面則是在測試上更容易可以去撰寫。</p>
+<p>接下來我會有一系列的文章來說明如何在Golang使用簡潔架構。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">The Clean Architecture - Uncle Bob</a></li>
+<li><a target="_blank" rel="noopener" href="https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html">再談Clean Architecture三原則</a></li>
+<li><a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10222311">DDD 架構： 整合 Clean Architecture</a></li>
+</ul>
+
       
     </div>
 
@@ -263,7 +360,16 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-12 07:48:11" itemprop="dateModified" datetime="2023-12-12T07:48:11+08:00">2023-12-12</time>
+      <time title="修改時間：2023-12-16 14:37:57" itemprop="dateModified" datetime="2023-12-16T14:37:57+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/docker/" itemprop="url" rel="index"><span itemprop="name">docker</span></a>
+        </span>
     </span>
 
   
@@ -381,7 +487,16 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-12 07:47:45" itemprop="dateModified" datetime="2023-12-12T07:47:45+08:00">2023-12-12</time>
+      <time title="修改時間：2023-12-16 14:39:21" itemprop="dateModified" datetime="2023-12-16T14:39:21+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
+        </span>
     </span>
 
   
@@ -484,7 +599,16 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-12 07:47:54" itemprop="dateModified" datetime="2023-12-12T07:47:54+08:00">2023-12-12</time>
+      <time title="修改時間：2023-12-16 14:39:25" itemprop="dateModified" datetime="2023-12-16T14:39:25+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
+        </span>
     </span>
 
   
@@ -586,7 +710,16 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-12 07:46:34" itemprop="dateModified" datetime="2023-12-12T07:46:34+08:00">2023-12-12</time>
+      <time title="修改時間：2023-12-16 14:39:31" itemprop="dateModified" datetime="2023-12-16T14:39:31+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
+        </span>
     </span>
 
   
@@ -681,87 +814,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/22/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術雜記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/03/22/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2022-03-22 22:54:54" itemprop="dateCreated datePublished" datetime="2022-03-22T22:54:54+08:00">2022-03-22</time>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
 
 </div>
   </main>
@@ -778,7 +830,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Bill Yang</span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 強力驅動
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
   </div>
 
     </div>
@@ -786,7 +838,7 @@
 
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
-<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
 
   
 
