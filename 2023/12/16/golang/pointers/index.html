@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言在這篇文章中，我們將深入探討 Golang 中的指標，這是系統開發和有效使用第三方 Library 的關鍵概念。那如果是有接觸過 C 或 C++ 的讀者，相信都對「指標」並不陌生，反之，如果是寫其他程式語言的朋友，就能透過這篇文章來了解指標的概念和用法。接下來我們會說明指標的概念和使用指標的方式，理解指標能讓你在使用 Golang 開發系統時更加得心應手。 目錄 Memory Pointer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何在 Golang 使用 Pointers">
+<meta property="og:url" content="http://billyang3416.github.io/project/2023/12/16/golang/pointers/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言在這篇文章中，我們將深入探討 Golang 中的指標，這是系統開發和有效使用第三方 Library 的關鍵概念。那如果是有接觸過 C 或 C++ 的讀者，相信都對「指標」並不陌生，反之，如果是寫其他程式語言的朋友，就能透過這篇文章來了解指標的概念和用法。接下來我們會說明指標的概念和使用指標的方式，理解指標能讓你在使用 Golang 開發系統時更加得心應手。 目錄 Memory Pointer">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/memory.png">
+<meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/reference-type.png">
+<meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/value-semantics.png">
+<meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/pointer-semantics.png">
+<meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/heap-stack.png">
+<meta property="article:published_time" content="2023-12-16T08:20:03.000Z">
+<meta property="article:modified_time" content="2023-12-18T13:40:38.631Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="golang">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/memory.png">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2023/12/16/golang/pointers/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2023/12/16/golang/pointers/","path":"2023/12/16/golang/pointers/","title":"如何在 Golang 使用 Pointers"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>如何在 Golang 使用 Pointers | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Memory"><span class="nav-number">3.</span> <span class="nav-text">Memory</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pointers"><span class="nav-number">4.</span> <span class="nav-text">Pointers</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reference-Type"><span class="nav-number">5.</span> <span class="nav-text">Reference Type</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Value-amp-Pointer-Semantics"><span class="nav-number">6.</span> <span class="nav-text">Value &amp; Pointer Semantics</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Value-Semantics"><span class="nav-number">6.1.</span> <span class="nav-text">Value Semantics</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pointer-Semantics"><span class="nav-number">6.2.</span> <span class="nav-text">Pointer Semantics</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Heap-and-Stack"><span class="nav-number">6.3.</span> <span class="nav-text">Heap and Stack</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Conclusion"><span class="nav-number">7.</span> <span class="nav-text">Conclusion</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術雜記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/16/golang/pointers/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="如何在 Golang 使用 Pointers | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何在 Golang 使用 Pointers
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-16 16:20:03" itemprop="dateCreated datePublished" datetime="2023-12-16T16:20:03+08:00">2023-12-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-18 21:40:38" itemprop="dateModified" datetime="2023-12-18T21:40:38+08:00">2023-12-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在這篇文章中，我們將深入探討 Golang 中的指標，這是系統開發和有效使用第三方 Library 的關鍵概念。<br>那如果是有接觸過 C 或 C++ 的讀者，相信都對「指標」並不陌生，反之，如果是寫其他程式語言的朋友，就能透過這篇文章來了解指標的概念和用法。<br>接下來我們會說明指標的概念和使用指標的方式，理解指標能讓你在使用 Golang 開發系統時更加得心應手。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>Memory</li>
+<li>Pointer</li>
+<li>Reference Type</li>
+<li>Value &amp; Pointer Semantics </li>
+<li>Conclusion</li>
+</ul>
+<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>Memory 可以稱之為”內存“，而在 Golang 的程式中，下列這些 Values 都會存放在內存中，放置的地方又可分為 Stack 和 Heap。</p>
+<ul>
+<li>Variable: 變數</li>
+<li>Function Parameter: 傳入方法的參數</li>
+<li>Return Value: 回傳值</li>
+<li>Structs: 組合資料，類似於物件導向語言中的「類別」</li>
+<li>Slices, Maps and Channels: 動態的資料結構</li>
+<li>Constants: 常數</li>
+</ul>
+<p>接下來我們可以透過圖例來了解內存，<br>這邊以變數的例子來說明，當我們宣告了一個 int 的變數時，<br>Golang 就會幫這一個變數找一個家，也就是配置一個內存的地址，而地址裡面住著就會是你的變數值。</p>
+<img src="/2023/12/16/golang/pointers/memory.png" class="" title="This is an memory image">
+
+<h2 id="Pointers"><a href="#Pointers" class="headerlink" title="Pointers"></a>Pointers</h2><p>在前面的圖例中，我們可以了解到每一個變數都會有相對應的內存地址，<br>那指標就是用來表示內存的地址，接下來我們看程式的範例。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Variable</span></span><br><span class="line">	x := <span class="number">34</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x)   <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, &amp;x, &amp;x) <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Pointer</span></span><br><span class="line">	p := &amp;x</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, p, p)   <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, *p, *p) <span class="comment">// 34 int</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/wy2izn1qTQE">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>透過上面的程式可以看到我們會使用 <code>&amp;</code> 和 <code>*</code> 來取得內存地址或變數值。</p>
+<ul>
+<li><code>&amp;</code>: 使用變數值來取得內存地址</li>
+<li><code>*</code>: 使用內存地址來取得變數值</li>
+</ul>
+<h2 id="Reference-Type"><a href="#Reference-Type" class="headerlink" title="Reference Type"></a>Reference Type</h2><p>平常我們在處理 Primitive Type 像是 int 和 string，這些原始型別都是直接儲存「資料」本身，<br>如果要取得內存地址，我們必須使用 <code>&amp;</code> 來將其轉換成 Reference Type，像是 *int, *string。<br>因此可以說 Reference Type 就是用來儲存內存地址，藉此可以在函式之間傳遞內存地址，而讓函式裡面可以直接對原始資料做修改。<br>透過下方的圖例和程式就可以了解到，如果我們想讓某個函式能直接調整 x 的值時，就可以將指標當作參數傳入函式裡面。</p>
+<img src="/2023/12/16/golang/pointers/reference-type.png" class="" title="This is an reference type image">
+
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">changeX</span><span class="params">(p *<span class="type">int</span>)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	*p = <span class="number">78</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Variable</span></span><br><span class="line">	x := <span class="number">34</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x)   <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, &amp;x, &amp;x) <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Pointer</span></span><br><span class="line">	p := &amp;x</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, p, p)   <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, *p, *p) <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	changeX(p)</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x) <span class="comment">// 78 int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/Q-b2DQJsUyp">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>常用的 Reference Type 有：</p>
+<ul>
+<li>pointers</li>
+<li>slices</li>
+<li>maps</li>
+<li>channels</li>
+<li>functions</li>
+<li>interfaces</li>
+</ul>
+<h2 id="Value-amp-Pointer-Semantics"><a href="#Value-amp-Pointer-Semantics" class="headerlink" title="Value &amp; Pointer Semantics"></a>Value &amp; Pointer Semantics</h2><p>當我們要將資料(變數)傳入到函式時，在程式語言中有兩種方式，<br>一種是 Value Semantics(值語義)，也就是我們常聽到的 <code>Pass By Value</code>，<br>而 Pointer Semantics(指標語義)則為 <code>Pass By Reference</code>。</p>
+<h3 id="Value-Semantics"><a href="#Value-Semantics" class="headerlink" title="Value Semantics"></a>Value Semantics</h3><p>我們先來看一下值語義的程式範例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span><span class="params">(a <span class="type">int</span>)</span></span> <span class="type">int</span> &#123;</span><br><span class="line">	a++</span><br><span class="line">	<span class="keyword">return</span> a</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	x := <span class="number">1</span></span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">	y := addOne(x)</span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line">	fmt.Println(y) <span class="comment">// 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/7syv5filSBc">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>透過圖可以看到當我們傳入 x 變數給函式時，就就會有新的內存地址儲存 a 的值，<br>直到函式執行完，才會將 a 的內存釋放，這就是 <code>Pass By Value</code>。</p>
+<img src="/2023/12/16/golang/pointers/value-semantics.png" class="" title="This is an value-semantics image">
+
+<h3 id="Pointer-Semantics"><a href="#Pointer-Semantics" class="headerlink" title="Pointer Semantics"></a>Pointer Semantics</h3><p>在說明指標語義前，有很重要的一點要先知道，就是所有的資料在 Golang 中傳遞都是 <code>Pass By Value</code>，<br>那為什麼在先前的範例中，我們還是可以透過指標來修改原始資料呢？<br>這是因為 Golang 會複製一份 Pointer 到新的內存地址，而這地址內所儲存的就是會是原始資料的地址，<br>因此我們可以修改到原始資料。<br>我們先來看一下程式範例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span><span class="params">(a *<span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	*a++</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	x := <span class="number">1</span></span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">	addOne(&amp;x)</span><br><span class="line">	fmt.Println(x) <span class="comment">// 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/eaiCas9w30Y">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>透過圖可以看到當 x 的指標被傳入到函式，就會有多一個複製的指標到新的內存地址，<br>而這地址內放的就會是原始資料的地址，藉此我們能修改原始資料。</p>
+<img src="/2023/12/16/golang/pointers/pointer-semantics.png" class="" title="This is an pointer-semantics image">
+
+<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
+<img src="/2023/12/16/golang/pointers/heap-stack.png" class="" title="This is an heap and stack image">
+
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>總結一下這篇文章的重點，我們了解到如何在 Golang 中使用 <code>&amp;</code>     或 <code>*</code> 來處理指標，也理解值語義和指標語義的差別之處。<br>善用指標能讓我們在使用 Golang 開發系統時更加得心應手，也能快速找到 Bug 和理解資料的流向。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/golang/" rel="tag"># golang</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/12/12/golang/clean-architecture/" rel="prev" title="Clean Architecture 簡潔架構">
+                  <i class="fa fa-chevron-left"></i> Clean Architecture 簡潔架構
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
