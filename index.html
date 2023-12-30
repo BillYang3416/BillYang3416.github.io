@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -300,177 +300,6 @@
 <li><a target="_blank" rel="noopener" href="https://go.dev/blog/waza-talk">Concurrency is not parallelism</a></li>
 <li><a target="_blank" rel="noopener" href="https://go.dev/talks/2012/waza.slide#1">Concurrency is not parallelism - Slides</a></li>
 </ul>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/22/rabbitmq/rabbitmq-parameters/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術雜記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/12/22/rabbitmq/rabbitmq-parameters/" class="post-title-link" itemprop="url">rabbitmq-parameters</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2023-12-22 17:02:38" itemprop="dateCreated datePublished" datetime="2023-12-22T17:02:38+08:00">2023-12-22</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-23 16:59:11" itemprop="dateModified" datetime="2023-12-23T16:59:11+08:00">2023-12-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，<br>我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。<br>而這些參數通常是需要在 run time 期間可以被改動的，<br>所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 推薦的作法。<br>這篇文章會介紹這些參數的用途和如何使用 Policy 進行配置。</p>
-<blockquote>
-<p>以 Queue 來說，如果建立時有綁定 message-ttl 就代表無法更改值，除非將 Queue 砍掉在重建。</p>
-</blockquote>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Exchange</li>
-<li>Queue </li>
-<li>Binding</li>
-<li>閥值類參數的建議</li>
-</ul>
-<h2 id="Exchange"><a href="#Exchange" class="headerlink" title="Exchange"></a>Exchange</h2><p>當我們在配置 Exchange 的參數時，可以分為靜態參數和可選性參數，而可選性參數都建議都使用 Policy 來配置，因為如果建立時就配置可選性參數，就會導致需要刪除物件才能修改該參數的結果。</p>
-<h3 id="靜態參數"><a href="#靜態參數" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>type</td>
-<td>Exchange 的類型，像是 direct、fanout、topic 和 header</td>
-<td></td>
-</tr>
-<tr>
-<td>durable</td>
-<td>broker 重新啟動後仍然存在</td>
-<td></td>
-</tr>
-<tr>
-<td>auto_delete</td>
-<td>當沒有 Queue 與 Exchange 做 binding 時會自動刪除</td>
-<td>false</td>
-</tr>
-<tr>
-<td>internal</td>
-<td>Exchange 不能接收發送者的訊息，只能在 broker 內部用來交換訊息</td>
-<td>false</td>
-</tr>
-</tbody></table>
-<h3 id="可選性參數"><a href="#可選性參數" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>alternate-exchange</td>
-<td>當訊息無法被轉到對應的Queue時，訊息可以轉到替代的 Exchange</td>
-<td></td>
-</tr>
-</tbody></table>
-<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><h3 id="靜態參數-1"><a href="#靜態參數-1" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>durable</td>
-<td>broker 重新啟動後仍然存在</td>
-<td></td>
-</tr>
-<tr>
-<td>auto_delete</td>
-<td>當沒有 Binding 也沒有消費者連接時會自動刪除</td>
-<td>false</td>
-</tr>
-</tbody></table>
-<h3 id="可選性參數-1"><a href="#可選性參數-1" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>durable</td>
-<td>broker 重新啟動後仍然存在</td>
-<td></td>
-</tr>
-</tbody></table>
 
       
     </div>
