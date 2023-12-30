@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -168,6 +168,446 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/23/golang/concurrency/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2023/12/23/golang/concurrency/" class="post-title-link" itemprop="url">淺談 Golang 的 Concurrency</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-23 17:00:50" itemprop="dateCreated datePublished" datetime="2023-12-23T17:00:50+08:00">2023-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-30 13:40:44" itemprop="dateModified" datetime="2023-12-30T13:40:44+08:00">2023-12-30</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>相信很多人在學習 GO 以前，都知道 GO 在處理並發時相對其他程式語言具有優勢，<br>我們能使用 GoRoutine(輕量化的Thread) 搭配 Channel 來處理並發，而且撰寫上也相對簡單。<br>因此這篇文章首先會介紹 Concurrency 的概念，再來說明如何使用 WaitGroup 來處理並發，<br>並且透過 Mutex 和 Atomic 來處理並發產生的 Race Condition，<br>至於 Channel 則會在未來的文章會與大家做介紹。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>Concurrency </li>
+<li>WaitGroup</li>
+<li>Race Condition<ul>
+<li>Mutex</li>
+<li>Atomic</li>
+</ul>
+</li>
+</ul>
+<h2 id="Concurrency"><a href="#Concurrency" class="headerlink" title="Concurrency"></a>Concurrency</h2><blockquote>
+<p>Concurrency is not parallelism.</p>
+</blockquote>
+<p>這句話是 Rob Pike 在 <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=oV9rvDllKEg&ab_channel=gnbitcom">Concurrency is not Parallelism</a> 的影片中對 Concurrency 和 Parallelism 的解釋，非常建議讀者們可以看這部影片，有助於對 Concurrency 概念有更深入的理解。</p>
+<p>接下來我們就來透過例子來了解什麼是 Parallelism 和 Concurrency，<br>這個例子是量販商的工作人員正在透過推車將電商貨品搬到貨車上。</p>
+<h3 id="Parallelism"><a href="#Parallelism" class="headerlink" title="Parallelism"></a>Parallelism</h3><img src="/2023/12/23/golang/concurrency/original.png" class="" title="This is an original image">
+
+<p>假設到了過年期間，貨量突然暴增，店長覺得這樣出貨的速度太慢，<br>因此他決定多加一個出貨站、一位工作人員和一台貨車，<br>藉此平行化的處理同一件事讓出貨效能變好，這就是 Parallelism 。</p>
+<img src="/2023/12/23/golang/concurrency/parallelism.png" class="" title="This is an parallelism image">
+
+
+<h3 id="Concurrency-1"><a href="#Concurrency-1" class="headerlink" title="Concurrency"></a>Concurrency</h3><p>那我們換一個想法，當我們不增加一個出貨站和一台貨車時，我們能怎麼做呢？<br>我們可以增加3位工作人員，讓他們各分其職，<br>有一位負責在出貨站出貨、而另一位則在貨車前面上貨，而另外兩位則負責推車。<br>基本上沒有工作人員在做重複的事情，而是有組織地讓每一個工作人員分工合作，<br>這就是 Concurrency。</p>
+<img src="/2023/12/23/golang/concurrency/concurrency.png" class="" title="This is an concurrency image">
+
+
+<h3 id="Concurrency-vs-Parallelism"><a href="#Concurrency-vs-Parallelism" class="headerlink" title="Concurrency vs Parallelism"></a>Concurrency vs Parallelism</h3><p>透過上述的例子可以看到 Parallelism 是通過加大資源在同一時間平行化地來執行任務，<br>而 Concurrency 則是有結構性、組織化的來管理和執行任務。<br>因此可以說 Concurrency 並不是 Parallelism，<br>而在 Go 中，我們使用 Goroutine 和 Channel 就是要透過 Concurrency 來設計你的任務，<br>藉此能負載高吞吐量的環境。</p>
+<h2 id="WaitGroup"><a href="#WaitGroup" class="headerlink" title="WaitGroup"></a>WaitGroup</h2><p>接下來我們來實作一下 Go 中的 Concurrency，<br>我們可以使用 GoRoutine，也就是另外開輕量化的 thread 來執行一項任務。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 0~100 都有</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/L3NOwX3tpdn">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>在上面的程式碼中，我們啟動了一百條的 GoRoutine 來增加 counter，<br>在你的想像中，最後所輸出的結果也應該都是 100，<br>但其實不然，因為 Main GoRoutine 並不會等待所有的 GoRoutine 執行完才結束，<br>所以我們可以使用 WaitGroup 讓 Main GoRoutine 等待到所有的 GoRoutine 都執行完成才結束。</p>
+<h3 id="使用-sync-WaitGroup"><a href="#使用-sync-WaitGroup" class="headerlink" title="使用 sync.WaitGroup"></a>使用 sync.WaitGroup</h3><p>接下來我們在剛剛的程式碼中使用 sync.WaitGroup() 的三個方法來協調 Main Goroutine 和 Sub Goroutine。</p>
+<ul>
+<li>wg.Add() : 表示有多少條的 Goroutine 需要等待</li>
+<li>wg.Done() : 結束 Sub Goroutine</li>
+<li>wg.Wait() : 通知 Main Goroutine 開始等待</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/swYSpV_efP7">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Race-Condition"><a href="#Race-Condition" class="headerlink" title="Race Condition"></a>Race Condition</h2><p>在剛剛所示範的程式碼中，其實存在了一個 Bug，也就是在 Concurrency 中常常會遇到的問題：Race Condition。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			runtime.Gosched() <span class="comment">// 暫緩該 GoRoutine 讓其他的 Goroutine 也開始執行</span></span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 0~100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/D6H0Sx2Yyqu">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>在上面的程式碼中，我們加上 <code>runtime.Goshced()</code> 的目的是讓 Race Condition 的問題凸顯出來，<br>此時可以在去執行程式，就會發現每次的執行結果都不同，這是因為每一條 Goroutine 都在爭搶 <code>counter</code> 這個共享變數，<br>第一條 Goroutine 讀取 <code>counter</code> 是 0、第二條 Goroutine 讀取 <code>counter</code> 也是 0，兩者在寫入值也都會將 <code>counter</code> 寫成 1，<br>並不是我們預期的結果，也是因為 Race Condition 所導致的結果。</p>
+<blockquote>
+<p>使用 go run -race main.go 可以判斷程式是否有 Race condition</p>
+</blockquote>
+<p>因此我們有兩個方法可以來避免 Race Condition 的發生，分別是 Mutex 和 Atomic。</p>
+<h3 id="Mutex"><a href="#Mutex" class="headerlink" title="Mutex"></a>Mutex</h3><p>我們可以使用 sync.Mutex 來保護共享變數，在 <code>counter</code> 被讀取和寫入的期間，<br>我們提供一個鎖來確保在某個時間段只有一個 GoRoutine 能對其讀取和寫入，<br>其他的 GoRoutine 必須等待鎖釋放後取得鎖才能執行。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> mu sync.Mutex</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			mu.Lock() <span class="comment">// 上鎖</span></span><br><span class="line">			v := counter</span><br><span class="line">			runtime.Gosched()</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			mu.Unlock() <span class="comment">// 解鎖</span></span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/bml3sUxSB0e">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>此時我們可以再透過 <code>go run -race main.go</code> 來驗證沒有 Race Condition 發生，並且程式的執行結果也都會為 100。</p>
+<h3 id="Atomic"><a href="#Atomic" class="headerlink" title="Atomic"></a>Atomic</h3><p>除了 sync.Mutex 之外，我們也能使用 atomic 來確保當有一條GoRoutine <br>在讀取和寫入 <code>counter</code> 時，並不會被其他的 GoRoutine 所干擾，<br>藉此避免 Race Condition 的發生。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> counter <span class="type">int64</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			atomic.AddInt64(&amp;counter, <span class="number">1</span>)</span><br><span class="line">			runtime.Gosched()</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/jRjA4hCHp8I">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>此時我們可以再透過 <code>go run -race main.go</code> 來驗證沒有 Race Condition 發生，並且程式的執行結果也都會為 100。</p>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>本篇文章主要說明了 Concurrency 的概念與 Parallelism 的一些差別之處，兩者看似很像但其中的概念卻不同。<br>另外也說明了如何使用 WaitGroup、Mutex 和 Atomic 來實作 Go 的 Concurrency。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://go.dev/blog/waza-talk">Concurrency is not parallelism</a></li>
+<li><a target="_blank" rel="noopener" href="https://go.dev/talks/2012/waza.slide#1">Concurrency is not parallelism - Slides</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/22/rabbitmq/rabbitmq-parameters/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2023/12/22/rabbitmq/rabbitmq-parameters/" class="post-title-link" itemprop="url">rabbitmq-parameters</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-22 17:02:38" itemprop="dateCreated datePublished" datetime="2023-12-22T17:02:38+08:00">2023-12-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-23 16:59:11" itemprop="dateModified" datetime="2023-12-23T16:59:11+08:00">2023-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，<br>我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。<br>而這些參數通常是需要在 run time 期間可以被改動的，<br>所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 推薦的作法。<br>這篇文章會介紹這些參數的用途和如何使用 Policy 進行配置。</p>
+<blockquote>
+<p>以 Queue 來說，如果建立時有綁定 message-ttl 就代表無法更改值，除非將 Queue 砍掉在重建。</p>
+</blockquote>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>Exchange</li>
+<li>Queue </li>
+<li>Binding</li>
+<li>閥值類參數的建議</li>
+</ul>
+<h2 id="Exchange"><a href="#Exchange" class="headerlink" title="Exchange"></a>Exchange</h2><p>當我們在配置 Exchange 的參數時，可以分為靜態參數和可選性參數，而可選性參數都建議都使用 Policy 來配置，因為如果建立時就配置可選性參數，就會導致需要刪除物件才能修改該參數的結果。</p>
+<h3 id="靜態參數"><a href="#靜態參數" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>type</td>
+<td>Exchange 的類型，像是 direct、fanout、topic 和 header</td>
+<td></td>
+</tr>
+<tr>
+<td>durable</td>
+<td>broker 重新啟動後仍然存在</td>
+<td></td>
+</tr>
+<tr>
+<td>auto_delete</td>
+<td>當沒有 Queue 與 Exchange 做 binding 時會自動刪除</td>
+<td>false</td>
+</tr>
+<tr>
+<td>internal</td>
+<td>Exchange 不能接收發送者的訊息，只能在 broker 內部用來交換訊息</td>
+<td>false</td>
+</tr>
+</tbody></table>
+<h3 id="可選性參數"><a href="#可選性參數" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>alternate-exchange</td>
+<td>當訊息無法被轉到對應的Queue時，訊息可以轉到替代的 Exchange</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><h3 id="靜態參數-1"><a href="#靜態參數-1" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>durable</td>
+<td>broker 重新啟動後仍然存在</td>
+<td></td>
+</tr>
+<tr>
+<td>auto_delete</td>
+<td>當沒有 Binding 也沒有消費者連接時會自動刪除</td>
+<td>false</td>
+</tr>
+</tbody></table>
+<h3 id="可選性參數-1"><a href="#可選性參數-1" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>durable</td>
+<td>broker 重新啟動後仍然存在</td>
+<td></td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/19/golang/json/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2023/12/19/golang/json/" class="post-title-link" itemprop="url">在 Golang 中如何處理 JSON</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-19 06:47:04" itemprop="dateCreated datePublished" datetime="2023-12-19T06:47:04+08:00">2023-12-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2023-12-23 17:01:19" itemprop="dateModified" datetime="2023-12-23T17:01:19+08:00">2023-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/json/" itemprop="url" rel="index"><span itemprop="name">json</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>這篇文章主要會介紹甚麼是 JSON 以及我們如何在 golang 中有效的使用 Standard Library 的 JSON package 來轉換 struct 和 JSON。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>甚麼是 JSON</li>
+<li>使用 Standard Library JSON</li>
+<li>結論</li>
+</ul>
+<h2 id="甚麼是-JSON"><a href="#甚麼是-JSON" class="headerlink" title="甚麼是 JSON"></a>甚麼是 JSON</h2><p>JSON 全名為 JavaScript Object Notation，可用來做資料交換，<br>像現在最常使用的Restful API設計，基本上都是使用 JSON 來讓前後端交換資料。<br>這邊我們透過圖例來了解一下，<br>假設使用者想要查詢餐點的資料，此時就能透過瀏覽器上的前端發送請求到後端，<br>接著後端會從DB取得資料並將資料轉化成JSON的格式傳回給前端，因此前端就能將餐點的資料渲染在頁面上。</p>
+<img src="/2023/12/19/golang/json/json.png" class="" title="This is an JSON image">
+
+<h2 id="使用-Standard-Library-的-JSON-package"><a href="#使用-Standard-Library-的-JSON-package" class="headerlink" title="使用 Standard Library 的 JSON package"></a>使用 Standard Library 的 JSON package</h2><p>在剛剛介紹的範例中，<br>我們提到了是後端會將資料轉換成 JSON 的格式再傳回給前端，<br>這代表我們會在 golang 中會需要把 struct 轉換成 JSON，<br>而這部分的轉換在golang的標準函式庫就有提供了。<br>接下來我會說明 Marshal、Unmarshal 和 tags 的用法。</p>
+<h3 id="Marshal"><a href="#Marshal" class="headerlink" title="Marshal"></a>Marshal</h3><p><code>json.Marshal()</code> 是使用在想要將 struct 轉換成 JSON 時，<br>透過下面的程式碼可以看到當我們直接輸出 struct 時，並不符合 JSON 的格式，<br>因此我們就要透過標準函式庫將 struct 做轉換</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span></span><br><span class="line">	Price  <span class="type">int</span></span><br><span class="line">	Amount <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	o := order&#123;Name: <span class="string">&quot;Cheeseburger&quot;</span>, Price: <span class="number">120</span>, Amount: <span class="number">2</span>&#125;</span><br><span class="line"></span><br><span class="line">	bs, err := json.Marshal(o)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(o)</span><br><span class="line">	fmt.Println(<span class="type">string</span>(bs))</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br><span class="line"><span class="comment">// &#123;&quot;Name&quot;:&quot;Cheeseburger&quot;,&quot;Price&quot;:120,&quot;Amount&quot;:2&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/djRoX3ytjw0">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h3 id="Tags"><a href="#Tags" class="headerlink" title="Tags"></a>Tags</h3><p>在 JSON 中，通常我們都使用駝峰式來命名欄位，<br>但因為 <code>json.Marshal()</code> 需要丟入有 export 欄位的 struct，因此欄位都會是大寫開頭。<br>所以我們能透過 <code>tags</code> 來表示 struct 欄位所對應到的 JSON 欄位。<br>透過下方的範例可以看到我們會在每個欄位的後方加上 <code>json:&quot;xxx&quot;</code>，<br>這就代表該欄位在轉換成 JSON 的格式時會顯示的鍵值。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line">	Price  <span class="type">int</span>    <span class="string">`json:&quot;price&quot;`</span></span><br><span class="line">	Amount <span class="type">int</span>    <span class="string">`json:&quot;amount&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	o := order&#123;Name: <span class="string">&quot;Cheeseburger&quot;</span>, Price: <span class="number">120</span>, Amount: <span class="number">2</span>&#125;</span><br><span class="line"></span><br><span class="line">	bs, err := json.Marshal(o)</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br><span class="line"><span class="comment">// &#123;&quot;name&quot;:&quot;Cheeseburger&quot;,&quot;price&quot;:120,&quot;amount&quot;:2&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/TKHQvrowDWm">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<blockquote>
+<p>假設欄位非常多，當我們一個一個手key就會非常累，因此能使用 <a target="_blank" rel="noopener" href="https://transform.tools/json-to-go">JSON to GO</a> 工具來產生 tags 會更加輕鬆，當然也可以使用AI工具來產生，像是 ChatGPT 或 Copilot</p>
+</blockquote>
+<h3 id="Unmarshal"><a href="#Unmarshal" class="headerlink" title="Unmarshal"></a>Unmarshal</h3><p>那前面介紹完將 struct 轉換成 JSON，那當然也要能從 JSON 轉換回 struct，<br>這種場景通常發生在前端發送表單類的請求給後端，<br>因此後端就需要透過 <code>json.Unmarshal()</code> 來將 JSON 轉換成 struct。<br>透過下方的範例就可以看到實作方法，特別注意的是在調用 <code>json.Unmarshal()</code> 時，<br>我們要傳入指標，這樣資料才能被寫進去。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line">	Price  <span class="type">int</span>    <span class="string">`json:&quot;price&quot;`</span></span><br><span class="line">	Amount <span class="type">int</span>    <span class="string">`json:&quot;amount&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	s := <span class="string">`&#123;&quot;name&quot;:&quot;Cheeseburger&quot;,&quot;price&quot;:120,&quot;amount&quot;:2&#125;`</span></span><br><span class="line"></span><br><span class="line">	bs := []<span class="type">byte</span>(s)</span><br><span class="line"></span><br><span class="line">	o := order&#123;&#125;</span><br><span class="line"></span><br><span class="line">	err := json.Unmarshal(bs, &amp;o)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(o)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/dkuT9Oa0gqH">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在現今的 WEB 開發中，基本上 JSON 資料的處理是不可或缺的，因此學習如何使用 golang 中的標準函式庫相當重要，在看完這篇文章後，現在的你應該知道如何透過 <code>json.Marshal</code> 或 <code>json.Unmarshal</code> 來處理 JSON 資料。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -213,7 +653,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-18 21:40:38" itemprop="dateModified" datetime="2023-12-18T21:40:38+08:00">2023-12-18</time>
+      <time title="修改時間：2023-12-18 21:43:26" itemprop="dateModified" datetime="2023-12-18T21:43:26+08:00">2023-12-18</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -299,7 +739,7 @@
 <p>透過圖可以看到當 x 的指標被傳入到函式，就會有多一個複製的指標到新的內存地址，<br>而這地址內放的就會是原始資料的地址，藉此我們能修改原始資料。</p>
 <img src="/2023/12/16/golang/pointers/pointer-semantics.png" class="" title="This is an pointer-semantics image">
 
-<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
+<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>Value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
 <img src="/2023/12/16/golang/pointers/heap-stack.png" class="" title="This is an heap and stack image">
 
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>總結一下這篇文章的重點，我們了解到如何在 Golang 中使用 <code>&amp;</code>     或 <code>*</code> 來處理指標，也理解值語義和指標語義的差別之處。<br>善用指標能讓我們在使用 Golang 開發系統時更加得心應手，也能快速找到 Bug 和理解資料的流向。</p>

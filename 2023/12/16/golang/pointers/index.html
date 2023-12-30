@@ -34,7 +34,7 @@
 <meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/pointer-semantics.png">
 <meta property="og:image" content="http://billyang3416.github.io/2023/12/16/golang/pointers/heap-stack.png">
 <meta property="article:published_time" content="2023-12-16T08:20:03.000Z">
-<meta property="article:modified_time" content="2023-12-18T13:40:38.631Z">
+<meta property="article:modified_time" content="2023-12-18T13:43:26.357Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="golang">
 <meta name="twitter:card" content="summary">
@@ -138,18 +138,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -224,7 +224,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-18 21:40:38" itemprop="dateModified" datetime="2023-12-18T21:40:38+08:00">2023-12-18</time>
+      <time title="修改時間：2023-12-18 21:43:26" itemprop="dateModified" datetime="2023-12-18T21:43:26+08:00">2023-12-18</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -310,7 +310,7 @@
 <p>透過圖可以看到當 x 的指標被傳入到函式，就會有多一個複製的指標到新的內存地址，<br>而這地址內放的就會是原始資料的地址，藉此我們能修改原始資料。</p>
 <img src="/2023/12/16/golang/pointers/pointer-semantics.png" class="" title="This is an pointer-semantics image">
 
-<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
+<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>Value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
 <img src="/2023/12/16/golang/pointers/heap-stack.png" class="" title="This is an heap and stack image">
 
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>總結一下這篇文章的重點，我們了解到如何在 Golang 中使用 <code>&amp;</code>     或 <code>*</code> 來處理指標，也理解值語義和指標語義的差別之處。<br>善用指標能讓我們在使用 Golang 開發系統時更加得心應手，也能快速找到 Bug 和理解資料的流向。</p>
@@ -335,6 +335,9 @@
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2023/12/19/golang/json/" rel="next" title="在 Golang 中如何處理 JSON">
+                  在 Golang 中如何處理 JSON <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
