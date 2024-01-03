@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。 目錄 GoRoutine Channel Buffered a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何使用 Golang 中的 Channel">
+<meta property="og:url" content="http://billyang3416.github.io/project/2023/12/30/golang/channel/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。 目錄 GoRoutine Channel Buffered a">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2023-12-30T08:36:42.000Z">
+<meta property="article:modified_time" content="2024-01-03T23:47:03.568Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="golang">
+<meta property="article:tag" content="concurrency">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2023/12/30/golang/channel/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2023/12/30/golang/channel/","path":"2023/12/30/golang/channel/","title":"如何使用 Golang 中的 Channel"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>如何使用 Golang 中的 Channel | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GoRoutine"><span class="nav-number">3.</span> <span class="nav-text">GoRoutine</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Channel"><span class="nav-number">4.</span> <span class="nav-text">Channel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unbuffered-and-Buffered-Channel"><span class="nav-number">5.</span> <span class="nav-text">Unbuffered and Buffered Channel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Directional-Channel"><span class="nav-number">6.</span> <span class="nav-text">Directional Channel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Range-Close"><span class="nav-number">7.</span> <span class="nav-text">Range Close</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Select"><span class="nav-number">8.</span> <span class="nav-text">Select</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B5%90%E8%AB%96"><span class="nav-number">9.</span> <span class="nav-text">結論</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">10.</span> <span class="nav-text">參考資料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術雜記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/30/golang/channel/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="如何使用 Golang 中的 Channel | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何使用 Golang 中的 Channel
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-30 16:36:42" itemprop="dateCreated datePublished" datetime="2023-12-30T16:36:42+08:00">2023-12-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-04 07:47:03" itemprop="dateModified" datetime="2024-01-04T07:47:03+08:00">2024-01-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，<br>再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，<br>最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>GoRoutine</li>
+<li>Channel</li>
+<li>Buffered and Unbuffered Channel</li>
+<li>Directional Channel</li>
+<li>Range Close</li>
+<li>Select</li>
+</ul>
+<h2 id="GoRoutine"><a href="#GoRoutine" class="headerlink" title="GoRoutine"></a>GoRoutine</h2><p>GoRoutine 基本上可以說是 Go Concurrency 的基礎之一，所以要學會使用和理解它的概念，<br>才能活用 Go 的 Concurrency Patteren，否則在開發上就會遇到無數的瓶頸和意想不到的 Bug。<br>這邊來說明三個 GoRoutine 的特點：</p>
+<ul>
+<li><p>輕量化</p>
+<p>相較於 Thread 所使用的記憶體和啟動時間，GoRoutine 所使用的資源比例都遠低於 Thread，可以說 GoRoutine 就是輕量化的 Thread</p>
+</li>
+<li><p>抽象化</p>
+<p>當我們使用 GoRoutine 時不用考慮到 OS 層級，因為 Go Runtime 會幫你管理 GoRoutine 和 OS Thread 之間的協作、溝通</p>
+</li>
+<li><p>簡單上手</p>
+<p>建立 GoRoutine 只需要在函式或方法前加上 <code>go</code> 的關鍵字，就能簡單地寫出 Concurrency 的程式碼</p>
+</li>
+</ul>
+<p>接下來我們來實作 GoRoutine，<br>當我們還未加上 <code>go</code> 關鍵字在方法前代表程式碼會同步執行，<br>輸出的結果就會為 <code>Hello World</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	printHello()</span><br><span class="line"></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/NEfVpFNxYob">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<p>但如果我們加上了 <code>go</code> 關鍵字在 <code>printHello</code> 的前方時，此時的程式碼就會變成非同步，但執行結果會只出現 <code>World</code>，這是因為 Main GoRoutine 並不會等待 Sub GoRoutine 執行後才結束，因此我們要使用 sync.WaitGroup 讓 Main GoRoutine 等待 Sub GoRoutine 執行完。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> printHello()</span><br><span class="line"></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/9jvkpIXuQo5">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> printHello(&amp;wg)</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">(wg *sync.WaitGroup)</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">	wg.Done()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/JoKGoSzkot8">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h2><p>從前面 GoRoutine 的介紹中，我們可以知道 GoRoutine 是用來負責執行並發的任務，<br>而在任務之間，我們會使用 Channel 來交換資料、協調任務之間的順序和引入 Concurrency Pattern。<br>舉個例子來說，假設我們有一個共享變數 (<code>counter</code>) 需要被多個 GoRoutine 增加時，<br>就可以使用 Channel，同時也避免 Race Condition 的發生。</p>
+<p>這邊我們來延續上面的程式碼實作 Channel，<br>可以看到程式碼拿掉了 sync.WaitGroup，但輸出的結果沒有變，一樣會是 <code>Hello World</code>。<br>這是因為 <code>Channel Block</code> 的關係，也就是說當我們使用 Channel 在 GoRoutine 之間傳遞或接收資料時，<br>會發生阻塞的現象，以下面的程式碼來說，Main GoRoutine 會等 <code>&lt;-c</code> 接收到資料之後才往下執行。</p>
+<p>執行流程：</p>
+<ol>
+<li>Main GoRoutine 建立 Channel 並啟動 sendHello GoRoutine</li>
+<li>Main GoRoutine 執行到 <code>fmt.Print(&lt;-c)</code> 會發生阻塞，等待 Channel 傳送資料</li>
+<li>sendHello GoRoutine 執行並將 “Hello “ 發送到 Channel </li>
+<li>Main GoRoutine 從 Channel 中接收 “Hello “，解除阻塞並印出它。</li>
+<li>Main GoRoutine 印出 “World”。</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> sendHello(c)</span><br><span class="line"></span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/B3rQDBjHtVo">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Unbuffered-and-Buffered-Channel"><a href="#Unbuffered-and-Buffered-Channel" class="headerlink" title="Unbuffered and Buffered Channel"></a>Unbuffered and Buffered Channel</h2><p>前面說明了 Channel 可以讓 GoRoutine 之間交換資料和達成同步，<br>而 Channel 儲存資料的容量又可以分為 Unbuffered 和 Buffered。<br>Unbuffered 的例子就是我們前面所使用的程式碼 <code>c := make(chan string)</code>，<br>代表這個 Channel 沒有容量可以存放，當 sendHello GoRoutine 要執行傳遞資料時，<br>Main GoRoutine 必須準備接收，否則傳遞就會被 <code>Blocked</code>，發生阻塞的現象。</p>
+<p>而在某些情況下，我們會希望降低阻塞現象的發生，像是在日誌系統中可以有生產者和消費者的角色，<br>生產者負責產生及傳遞日誌資料給 Channel，而消費者則負責從 Channel 接收日誌資料寫入到檔案，<br>因為日誌的資訊是非常重要的，所以我們需要生產者能持續產生，<br>因此不希望生產者發生阻塞現象，此時就可以使用 Buffer Channel，<br>代表這個 Channel 在未達到最大容量前都不會被 <code>Blocked</code>。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>, <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> sendHello(c)</span><br><span class="line"></span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/Ut-NE1oKkoi">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Directional-Channel"><a href="#Directional-Channel" class="headerlink" title="Directional Channel"></a>Directional Channel</h2><p>接下來要提到的是 Channel 可以依據行為來劃分 Directional Channel，<br>也就是我們先前提到的傳遞(Send)和接收(Receive)的行為，這兩個就分別代表了不同的資料流向，<br>使用 Directional Channel 可以確保程式碼更加簡潔和增加可讀性，也能讓單一函式的責任劃分明確，<br>並且還能導入一些常用的 Concurrency Pattern，後面文章會再做更詳細的介紹。</p>
+<p>Directional Channel: </p>
+<ul>
+<li>傳遞(Send) : chan&lt;- Type</li>
+<li>接收(Receive) : &lt;-chan Type</li>
+</ul>
+<p>這邊我們就來實作 Directional Channel，<br>在下面的程式碼中，我們多增加一個 printHello GoRoutine 代表只能從 Channel 接收資料，<br>而 sendHello GoRoutine 則代表只能傳送資料到 Channel。<br>如果我們在 printHello 也使用 <code>c &lt;- &quot;Hello &quot;</code> 就會執行失敗，<br>Compiler 就會顯示「invalid operation: cannot send to receive-only channel c (variable of type &lt;-chan string)」<br>來確保 printHello GoRoutine 只能從 Channel 接收資料。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		sendHello(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		printHello(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait() <span class="comment">// 確保 Main GoRoutine 會等待 Sub Routine 結束</span></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span>&lt;- <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">(c &lt;-<span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/03JNDoM6OU-">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Range-Close"><a href="#Range-Close" class="headerlink" title="Range Close"></a>Range Close</h2><p>那在前面的程式碼，我們都是使用單筆資料來實作，<br>但在實際場景中，其實大多都會是多筆資料，像是生產者與消費者的案例，<br>消費者需要持續接收資料，而在這個情況下，我們就可以使用 Range 讓消費者持續從 Channel 接收。<br>另外很重要的一點是我們需要關注消費者何時停止接收，避免發生 deadlock 或 GoRoutine leak，<br>這時候就要在生產者使用 <code>close</code> 來發出訊號讓消費者知道要停止接收。</p>
+<p>在下面的程式碼中，我們使用的是 Unbuffered Channel，<br>代表 Channel 沒有容量，生產者傳遞資料時必須等待消費者準備接收才行，<br>因此下方的流程就會是當生產者每傳遞一筆資料到 Channel，消費者也會同時從 Channel 取出並打印，<br>直到生產者使用 <code>close</code>，消費者才停止接收。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		produce(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		consume(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;about to exit&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">produce</span><span class="params">(c <span class="keyword">chan</span>&lt;- <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">5</span>; i++ &#123;</span><br><span class="line">		c &lt;- i</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">close</span>(c) <span class="comment">// 通知消費者停止接收，可以嘗試將這行拿掉，看會出現什麼訊息</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">consume</span><span class="params">(c &lt;-<span class="keyword">chan</span> <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> c &#123;</span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/leKm3wMh_v0">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="Select"><a href="#Select" class="headerlink" title="Select"></a>Select</h2><p>在前面我們都是使用單個 Channel 來演示，<br>但在某些情況下，我們會需要接收多個 Channel 的資料，<br>這時候就可以透過 <code>select</code> 來決定對不同 Channel 的資料做處理。</p>
+<p>下面的程式碼，我們使用奇偶數的例子來模擬多個 Channel 的處理。<br>此外當生產者結束迴圈後，我們會再透過一個 Channel 來發送停止訊號，讓消費者停止接收。<br>當然 <code>select</code> 也可以獨立使用，不一定要和 for 搭配使用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	odd := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line">	even := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line">	quit := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		produce(odd, even, quit)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		consume(odd, even, quit)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;about to exit&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">produce</span><span class="params">(odd, even, quit <span class="keyword">chan</span>&lt;- <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">1</span>; i &lt;= <span class="number">10</span>; i++ &#123;</span><br><span class="line">		<span class="keyword">if</span> i%<span class="number">2</span> == <span class="number">0</span> &#123;</span><br><span class="line">			even &lt;- i</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			odd &lt;- i</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	quit &lt;- <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">consume</span><span class="params">(odd, even, quit &lt;-<span class="keyword">chan</span> <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-odd:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Odd Channel:&quot;</span>, v)</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-even:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Even Channel:&quot;</span>, v)</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-quit:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Quit Channel:&quot;</span>, v)</span><br><span class="line">			<span class="keyword">return</span> <span class="comment">// 結束無窮迴圈</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/5E-XnxS4IdH">使用 GoPlayGround 看實際結果</a></p>
+</blockquote>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在這篇文章中，我們先介紹了 GoRoutine 和 Channel 的基礎概念，<br>再來說明了 Unbuffered 和 Buffered 的差別和 Directional Channel 的用法及其意義，<br>最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料以及使用 Select 應對多個 Channel。<br>在後續的文章中，我們會在介紹 Go 的 Concurrency Pattern 像是 Fan-In、Fan-Out、Worker-Pool 和 Pipeline，<br>還有 Go 的 Context。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/a/39831976">What are channels used for?</a><br><a target="_blank" rel="noopener" href="https://divan.dev/posts/go_concurrency_visualize/">Visualizing Concurrency in Go</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/golang/" rel="tag"># golang</a>
+              <a href="/tags/concurrency/" rel="tag"># concurrency</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/12/23/golang/concurrency/" rel="prev" title="淺談 Golang 的 Concurrency">
+                  <i class="fa fa-chevron-left"></i> 淺談 Golang 的 Concurrency
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
