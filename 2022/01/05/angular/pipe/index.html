@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，簡單來說，你可以將 pipe 視為一個function在Template裡面使用，input  → pipe → output舉例來說，當日期的資料為 西元 2021&#x2F;05&#x2F;10，就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。 目錄 常用的 Pipe Pipe 使用方式 自定義 P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Angular Pipe">
+<meta property="og:url" content="http://billyang3416.github.io/project/2022/01/05/angular/pipe/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，簡單來說，你可以將 pipe 視為一個function在Template裡面使用，input  → pipe → output舉例來說，當日期的資料為 西元 2021&#x2F;05&#x2F;10，就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。 目錄 常用的 Pipe Pipe 使用方式 自定義 P">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://i.imgur.com/X26NP0q.png">
+<meta property="article:published_time" content="2022-01-05T09:47:01.000Z">
+<meta property="article:modified_time" content="2024-01-06T02:37:07.287Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="Angular">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/X26NP0q.png">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2022/01/05/angular/pipe/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2022/01/05/angular/pipe/","path":"2022/01/05/angular/pipe/","title":"Angular Pipe"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Angular Pipe | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E7%9A%84-Pipe"><span class="nav-number">3.</span> <span class="nav-text">常用的 Pipe</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pipe-%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F"><span class="nav-number">4.</span> <span class="nav-text">Pipe 使用方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A0%E4%B8%8A%E5%8F%83%E6%95%B8"><span class="nav-number">4.0.1.</span> <span class="nav-text">加上參數</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Chain-Pipe"><span class="nav-number">4.0.2.</span> <span class="nav-text">Chain-Pipe</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E7%BE%A9-Pipe"><span class="nav-number">5.</span> <span class="nav-text">自定義 Pipe</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">6.</span> <span class="nav-text">參考資料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術雜記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/pipe/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Angular Pipe | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Angular Pipe
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-01-05 17:47:01" itemprop="dateCreated datePublished" datetime="2022-01-05T17:47:01+08:00">2022-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:37:07" itemprop="dateModified" datetime="2024-01-06T10:37:07+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，<br>簡單來說，你可以將 pipe 視為一個function在Template裡面使用，<br>input  → pipe → output<br>舉例來說，<br>當日期的資料為 西元 2021&#x2F;05&#x2F;10，<br>就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>常用的 Pipe</li>
+<li>Pipe 使用方式</li>
+<li>自定義 Pipe</li>
+</ul>
+<h2 id="常用的-Pipe"><a href="#常用的-Pipe" class="headerlink" title="常用的 Pipe"></a>常用的 Pipe</h2><ul>
+<li><p>Date</p>
+<p>  將日期轉換為本地格式</p>
+</li>
+<li><p>Upper Case</p>
+<p>  英文字母轉換為大寫</p>
+</li>
+<li><p>Lower Case</p>
+<p>  英文字母轉換為小寫</p>
+</li>
+<li><p>Currency</p>
+<p>  將數字轉換為貨幣字串，格式也能在地化</p>
+</li>
+<li><p>Decimal</p>
+<p>  將數字轉換為有小數點的字串，格式也能在地化</p>
+</li>
+<li><p>Percent</p>
+<p>  將數字轉換為有百分比的字串，格式也能在地化</p>
+</li>
+</ul>
+<h2 id="Pipe-使用方式"><a href="#Pipe-使用方式" class="headerlink" title="Pipe 使用方式"></a>Pipe 使用方式</h2><p>如果要使用 Pipe ， 就必須在Template使用 pipe operator  ( | )</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">today = <span class="keyword">new</span> <span class="title class_">Date</span>(<span class="number">2021</span>, <span class="number">0</span>, <span class="number">20</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Jan 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="加上參數"><a href="#加上參數" class="headerlink" title="加上參數"></a>加上參數</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 2021-01-20 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123; today | date:&#x27;yyyy-MM-dd&#x27; &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Chain-Pipe"><a href="#Chain-Pipe" class="headerlink" title="Chain-Pipe"></a>Chain-Pipe</h4><p>如果想要使用多個Pipe，就在Pipe串接其他Pipe。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- WEDNESDAY, JANUARY 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date:&#x27;fullDate&#x27; | uppercase &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="自定義-Pipe"><a href="#自定義-Pipe" class="headerlink" title="自定義 Pipe"></a>自定義 Pipe</h2><p>在某些時候，部分資料的轉換並沒有built-in Pipe可以使用，<br>那我們就可以透過客製化的Pipe來轉換資料，<br>而客製化Pipe在Template的使用方式也會如同built-in Pipe一樣。<br>舉例來說，當我取得學生的數學成績資料，發現成績都不甚理想，<br>故此想在畫面上多顯示加乘過後的成績。</p>
+<ul>
+<li><p>建立 Class</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pipe的名稱必須為駝峰式命名，不能有底線</span></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Implements Pipe Transform 介面</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>, <span class="title class_">PipeTransform</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> <span class="keyword">implements</span> <span class="title class_">PipeTransform</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">transform</span>(<span class="params">value: <span class="built_in">number</span>, multiplyParam: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">      <span class="comment">// value為分數，multiplyParam為加乘參數</span></span><br><span class="line">      <span class="keyword">return</span> value * multiplyParam;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果為手動建立需在ngModule宣告Pipe，避免發生找不到類別的錯誤</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;  </span><br><span class="line">  <span class="attr">declarations</span>: [<span class="title class_">MultiplyScorePipe</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在Template裡面使用 Pipe 來轉換資料</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Component</span>, <span class="title class_">OnInit</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;my-app&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./app.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">styleUrls</span>: [<span class="string">&#x27;./app.component.css&#x27;</span>]</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppComponent</span> <span class="keyword">implements</span> <span class="title class_">OnInit</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="attr">students</span>: &#123; <span class="attr">name</span>: <span class="built_in">string</span>; <span class="attr">mathScore</span>: <span class="built_in">number</span> &#125;[];</span><br><span class="line"></span><br><span class="line">  <span class="title function_">ngOnInit</span>(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">students</span> = [</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Bill&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">45</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;John&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">32</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Neil&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">15</span> &#125;</span><br><span class="line">    ];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;table&gt;</span><br><span class="line">  &lt;thead&gt;</span><br><span class="line">    &lt;tr&gt;</span><br><span class="line">      &lt;th&gt;學生名稱&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學原始成績&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學加乘成績&lt;/th&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/thead&gt;</span><br><span class="line">  &lt;tbody&gt;</span><br><span class="line">    &lt;tr *ngFor=&quot;let student of students&quot;&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.name &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore | multiplyScore:3.2 &#125;&#125;&lt;/td&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/tbody&gt;</span><br><span class="line">&lt;/table&gt;</span><br></pre></td></tr></table></figure>
+
+<p> <img src="https://i.imgur.com/X26NP0q.png" alt="demo"></p>
+</li>
+</ul>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/pipes">pipes</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Angular/" rel="tag"># Angular</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/01/05/angular/directive/" rel="prev" title="Angular Directive">
+                  <i class="fa fa-chevron-left"></i> Angular Directive
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/01/05/angular/service/" rel="next" title="Angular Service">
+                  Angular Service <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

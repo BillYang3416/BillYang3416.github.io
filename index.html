@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -168,6 +168,220 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/05/microservice/async-communication/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/01/05/microservice/async-communication/" class="post-title-link" itemprop="url">淺談微服務架構的非同步機制</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2024-01-05 10:10:03" itemprop="dateCreated datePublished" datetime="2024-01-05T10:10:03+08:00">2024-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Microservice/" itemprop="url" rel="index"><span itemprop="name">Microservice</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章會先說明同步和非同步的差別，接著在解釋在微服務中使用非同步的優勢，<br>最後則簡單介紹非同步的通訊協定，像是 AMQP。 </p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>甚麼是同步和非同步</li>
+<li>在微服務中使用非同步的優勢</li>
+<li>Advanced Message Queuing Protocol (AMQP)</li>
+</ul>
+<h2 id="甚麼是同步和非同步"><a href="#甚麼是同步和非同步" class="headerlink" title="甚麼是同步和非同步"></a>甚麼是同步和非同步</h2><p>以往有接觸過 Web Service 的朋友，應該都對同步和非同步的概念並不陌生，<br>這邊我們舉一個例子來說明同步和非同步的差別，<br>假設在電商系統中，我們有兩個服務分別是訂單和庫存，<br>訂單服務接收到前端建立訂單的 HTTP 請求，當訂單成立時，我們需要去減少庫存的商品數量，<br>這時候訂單服務會再發送 HTTP 請求給庫存服務，庫存對資料庫操作後再回應給訂單服務，<br>訂單服務再回應給前端表示建立訂單成功，這個資料流程就會為<code>同步</code>。<br>透過下方的圖示可以看到訂單和庫存服務已經耦合在一起，並且前端接收到回應時間也會被拉長。</p>
+<img src="/2024/01/05/microservice/async-communication/sync.png" class="" title="This is an sync image">
+
+<p>所以我們可以使用非同步的機制來將服務間的關係解耦並且減少回應時間，<br>透過 Message Broker 建立生產者和消費者的 Pattern，<br>生產者可以持續將訊息放入到 Message Broker，再由消費者透過訂閱的方式向 Message Broker 取得訊息在進行處理，這種資料流程就會為<code>非同步</code>。</p>
+<img src="/2024/01/05/microservice/async-communication/async.png" class="" title="This is an async image">
+
+<h2 id="在微服務中使用非同步的優勢"><a href="#在微服務中使用非同步的優勢" class="headerlink" title="在微服務中使用非同步的優勢"></a>在微服務中使用非同步的優勢</h2><p>那為甚麼我們需要在微服務中使用非同步的機制呢?<br>其實從前面的例子可以了解到幾個優勢:</p>
+<ul>
+<li><p>解耦服務之間的依賴關係</p>
+<p>假設我們使用同步的方式處理資料，就會遇到當庫存服務改變 API 的 URL 時，連帶就會影響到訂單服務；使用非同步能減少服務間的直接依賴</p>
+</li>
+<li><p>增加效能</p>
+<p>因服務間的資料流不會被同步所阻塞，所以回應時間就會與之降低，增加系統的效能</p>
+</li>
+<li><p>容錯率變高</p>
+<p>因服務之間不會直接依賴，所以當庫存服務壞掉時並不會影響到訂單服務的流程，所造成的影響可能只是 Message Broker 的 Queue 會儲存大量的訊息</p>
+</li>
+</ul>
+<p>因為這些優勢，所以在微服務的架構中都會設計非同步的資料流和 Message Broker 的角色。</p>
+<h2 id="Advanced-Message-Queuing-Protocol-AMQP"><a href="#Advanced-Message-Queuing-Protocol-AMQP" class="headerlink" title="Advanced Message Queuing Protocol (AMQP)"></a>Advanced Message Queuing Protocol (AMQP)</h2><p>在微服務的架構中，通常我們會使用 AMQP 作為非同步的通訊協定，<br>AMQP 也和 HTTP 一樣，屬於 OSI 中的 Applicaion Layer，<br>通常會被 Message-Oriented 的 Middleware 所使用，用來和服務做資料交換。<br>而使用 AMQP 的 Middleware 主要有兩個，分別是 RabbitMQ 和 ActiveMQ。</p>
+<p>當然在微服務中也會使用其他的 Middleware 像是 Apache Kafka、Amazon SQS 和 Google Pub&#x2F;Sub，這些都沒有支援 AMQP，但一樣能達到非同步的目的和取得它的優勢。</p>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>透過這篇文章的說明，可以了解到非同步機制的設計在微服務中不可或缺，<br>對此有興趣的讀者可以在深入了解 AMQP 的原理和 middleware 的使用方法，<br>像是 RabbitMQ 的官方文件就相當完整，在參閱後就能簡單建立出具有非同步機制的服務。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.rabbitmq.com/">RabbitMQ</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/design-microservices-architecture-with-patterns/microservices-asynchronous-message-based-communication-6643bee06123">Microservices Asynchronous Message-Based Communication</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/05/golang/error-handling/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/01/05/golang/error-handling/" class="post-title-link" itemprop="url">淺談 Golang 的錯誤處理</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+      
+
+      <time title="創建時間：2024-01-05 06:45:16 / 修改時間：08:19:09" itemprop="dateCreated datePublished" datetime="2024-01-05T06:45:16+08:00">2024-01-05</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>type Error interface<ul>
+<li>create own custom error struct</li>
+</ul>
+</li>
+<li>package errors<ul>
+<li>New as error struct implement error interface</li>
+</ul>
+</li>
+<li>checking error</li>
+<li>printing &amp; logging<ul>
+<li>stdout</li>
+<li>fatal &#x3D;&gt; os.Exit() defer funcs are not run</li>
+<li>panic() &#x3D;&gt; defer funcs has run</li>
+</ul>
+</li>
+<li>defer, panic,  recover</li>
+<li>errors with info<ul>
+<li>fmt.Errorf</li>
+<li>errors.New()</li>
+<li>custom error</li>
+</ul>
+</li>
+</ul>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://go.dev/blog/error-handling-and-go">Error handling and Go</a></li>
+<li><a target="_blank" rel="noopener" href="https://go.dev/blog/defer-panic-and-recover">Defer, Panic, and Recover</a></li>
+<li><a target="_blank" rel="noopener" href="https://cs.opensource.google/go/go/+/refs/tags/go1.21.5:src/errors/errors.go;l=61">Errors New source</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -213,7 +427,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-04 07:47:03" itemprop="dateModified" datetime="2024-01-04T07:47:03+08:00">2024-01-04</time>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -221,7 +435,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
     </span>
 
@@ -385,7 +599,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-30 13:47:39" itemprop="dateModified" datetime="2023-12-30T13:47:39+08:00">2023-12-30</time>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -393,7 +607,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
     </span>
 
@@ -507,6 +721,281 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/22/rabbitmq/parameters/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2023/12/22/rabbitmq/parameters/" class="post-title-link" itemprop="url">深入解析 RabbitMQ 的參數設定</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2023-12-22 17:02:38" itemprop="dateCreated datePublished" datetime="2023-12-22T17:02:38+08:00">2023-12-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，<br>我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。<br>而這些參數通常會需要在 runtime 期間可以被改動的，<br>所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 官方所推薦的作法。<br>這篇文章會介紹這些參數的用途和如何使用 Policy 進行配置。</p>
+<blockquote>
+<p>以 Queue 來說，如果建立時有綁定 message-ttl 就代表無法更改值，除非將 Queue 砍掉在重建。</p>
+</blockquote>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>Exchange</li>
+<li>Queue </li>
+<li>Binding</li>
+<li>閥值類參數的建議</li>
+</ul>
+<h2 id="Exchange"><a href="#Exchange" class="headerlink" title="Exchange"></a>Exchange</h2><p>Exchange 的參數可以劃分為靜態參數和可選性參數，<br>而可選性參數都建議都使用 Policy 來配置，<br>因為如果建立時就配置可選性參數，就會需要刪除物件才能修改參數的設定。</p>
+<h3 id="靜態參數"><a href="#靜態參數" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>type</td>
+<td>Exchange 的類型，像是 direct、fanout、topic 和 header</td>
+<td></td>
+</tr>
+<tr>
+<td>durable</td>
+<td>broker 重新啟動後仍然存在</td>
+<td></td>
+</tr>
+<tr>
+<td>auto_delete</td>
+<td>當沒有 Queue 與 Exchange 做 binding 時會自動刪除</td>
+<td>false</td>
+</tr>
+<tr>
+<td>internal</td>
+<td>Exchange 不能接收發送者的訊息，只能在 broker 內部用來交換訊息</td>
+<td>false</td>
+</tr>
+</tbody></table>
+<h3 id="可選性參數"><a href="#可選性參數" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>alternate-exchange</td>
+<td>當訊息無法被轉到對應的Queue時，訊息可以轉到替代的 Exchange</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><p>至於 Queue 一樣也可以分為靜態參數和可選性參數，<br>而可選性參數都建議都使用 Policy 來配置，<br>因為如果建立時就配置可選性參數，就會需要刪除物件才能修改參數的設定。</p>
+<h3 id="靜態參數-1"><a href="#靜態參數-1" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>durable</td>
+<td>broker 重新啟動後仍然存在</td>
+<td></td>
+</tr>
+<tr>
+<td>auto_delete</td>
+<td>當沒有 Binding 也沒有消費者連接時就會自動刪除</td>
+<td>false</td>
+</tr>
+</tbody></table>
+<h3 id="可選性參數-1"><a href="#可選性參數-1" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>x-message-ttl</td>
+<td>訊息能在 Queue 裏存活的時間，如果時間超過，訊息就會被轉至到 DLQ 或刪除。另外如果訊息的狀態已經變成　<code>unacknowledge</code> 就不會計算 ttl</td>
+<td></td>
+</tr>
+<tr>
+<td>x-expires</td>
+<td>如果 Queue 在時間內都沒有被使用到，則 Queue 會被自動刪除</td>
+<td></td>
+</tr>
+<tr>
+<td>x-max-length</td>
+<td>訊息在 Queue 裏的最大存放數量，如果訊息的狀態已經變成　<code>unacknowledge</code> 則不在此列</td>
+<td></td>
+</tr>
+<tr>
+<td>x-max-length-bytes</td>
+<td>訊息在 Queue 裏的最大存放空間，如果訊息的狀態已經變成　<code>unacknowledge</code> 則不在此列</td>
+<td></td>
+</tr>
+<tr>
+<td>x-overflow</td>
+<td>當 x-max-length 或 x-max-length-bytes 的條件達成時，Queue 對接收的訊息所做出的行為，可以分為 drop-head (最舊的會被移除)、reject-publish (發送端會發送失敗) 和 reject-publish-dlx (發送失敗被轉移到 DLQ)</td>
+<td>drop-head</td>
+</tr>
+<tr>
+<td>x-dead-letter-exchange</td>
+<td>當訊息被 rejected 或過期時，要經由哪一個 Exchange 做轉移</td>
+<td></td>
+</tr>
+<tr>
+<td>x-dead-letter-routing-key</td>
+<td>當訊息被 rejected 或過期時，用來轉移 DLQ 的鍵值</td>
+<td></td>
+</tr>
+<tr>
+<td>x-queue-mode</td>
+<td>訊息要儲存在 Memory 還是 Disk，可以分為 default(memory) 和 lazy(disk)</td>
+<td>default</td>
+</tr>
+<tr>
+<td>x-queue-type</td>
+<td>Queue 的類型，可以分為 classic 和 quorum</td>
+<td>classic</td>
+</tr>
+</tbody></table>
+<h3 id="Policy-額外能設定的參數"><a href="#Policy-額外能設定的參數" class="headerlink" title="Policy 額外能設定的參數"></a>Policy 額外能設定的參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>delivery-limit</td>
+<td>當訊息沒有被 RabbitMQ 傳遞成功時，RabbiMQ 嘗試傳遞的最大次數，避免發生 Poison Message 的現象，也就是當消費者消費訊息失敗，訊息回到 Queue，RabbitMQ又在傳遞給消費者，如此重複下去</td>
+<td></td>
+</tr>
+<tr>
+<td>dead-letter-strategy</td>
+<td>當訊息傳遞失敗或超過TTL，在傳遞給DLQ的策略，可以分為 at-most-once(訊息最多傳遞一次給DLQ) 和 at-least-once(訊息至少要傳遞給DLQ成功一次，必須搭配 overflow 的 reject-publish)</td>
+<td>at-most-once</td>
+</tr>
+</tbody></table>
+<h2 id="Binding"><a href="#Binding" class="headerlink" title="Binding"></a>Binding</h2><p>Binding 是用來配置 Exchange 和 Queue 的關係，<br>這一塊通常不需要使用 Policy 來配置可選性參數，<br>只需要在建立的時候指定 Exchange、Queue 和 RoutingKey。</p>
+<h3 id="靜態參數-2"><a href="#靜態參數-2" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>用途</th>
+<th>預設值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Exchange</td>
+<td>Exchange 的名稱</td>
+<td></td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Queue 的名稱</td>
+<td></td>
+</tr>
+<tr>
+<td>Routing Key</td>
+<td>路由的鍵值</td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="設置閥值類參數的建議"><a href="#設置閥值類參數的建議" class="headerlink" title="設置閥值類參數的建議"></a>設置閥值類參數的建議</h2><p>前面我們提到了 Queue 的可選性參數，其中有三個參數分別是 x-message-ttl、x-max-length 和 x-max-length-bytes，<br>這三個可以歸類成閥值類的參數，代表我們需要依據系統來動態調整這些參數。<br>這邊提供一些調整參數時的準則當作參考:</p>
+<ul>
+<li>x-message-ttl<ul>
+<li>消費者行為: 如果消費者消費比較慢，則要將 ttl 設長一點</li>
+</ul>
+</li>
+<li>x-max-length<ul>
+<li>吞吐量大小: 計算 publising rate 和 consuming rate，如果生產者產製訊息比消費者更快，就需要更大的 x-max-length</li>
+</ul>
+</li>
+<li>x-max-length-bytes<ul>
+<li>訊息大小: 如果每一筆訊息的容量都偏大，就可以將 x-max-length-bytes 調高，以便負荷更多的訊息</li>
+</ul>
+</li>
+</ul>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在這篇文章我們詳細介紹了關於 Exchange、Queue 和 Binding 的參數，<br>並且還區分了靜態參數和可選性參數。<br>另外值得一提的是，使用 Policy 來配置可選性參數相當重要，<br>因為在系統運行時，我們不希望要刪除物件來修改參數，<br>一旦刪除了物件，不只會影響到服務的運行，還要重新配置 Exchange 和 Queue 的 Binding，一不小心就很容易出錯。<br>最後則提供了一些配置閥值類參數的建議。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.rabbitmq.com/parameters.html">Parameters and Policies</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/19/golang/json/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -543,7 +1032,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-23 17:01:19" itemprop="dateModified" datetime="2023-12-23T17:01:19+08:00">2023-12-23</time>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -551,11 +1040,11 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
           ，
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/json/" itemprop="url" rel="index"><span itemprop="name">json</span></a>
+          <a href="/categories/Json/" itemprop="url" rel="index"><span itemprop="name">Json</span></a>
         </span>
     </span>
 
@@ -663,7 +1152,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-18 21:43:26" itemprop="dateModified" datetime="2023-12-18T21:43:26+08:00">2023-12-18</time>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -671,7 +1160,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
     </span>
 
@@ -815,7 +1304,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-16 14:51:13" itemprop="dateModified" datetime="2023-12-16T14:51:13+08:00">2023-12-16</time>
+      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -823,11 +1312,11 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
         </span>
           ，
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/clean-architecture/" itemprop="url" rel="index"><span itemprop="name">clean architecture</span></a>
+          <a href="/categories/Clean-Architecture/" itemprop="url" rel="index"><span itemprop="name">Clean Architecture</span></a>
         </span>
     </span>
 
@@ -926,7 +1415,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/01/03/docker/docker-image/">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/service/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -944,7 +1433,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/01/03/docker/docker-image/" class="post-title-link" itemprop="url">Docker Image</a>
+          <a href="/2022/01/05/angular/service/" class="post-title-link" itemprop="url">Angular Service</a>
         </h2>
 
         <div class="post-meta-container">
@@ -955,14 +1444,14 @@
       </span>
       <span class="post-meta-item-text">發表於</span>
 
-      <time title="創建時間：2023-01-03 11:34:42" itemprop="dateCreated datePublished" datetime="2023-01-03T11:34:42+08:00">2023-01-03</time>
+      <time title="創建時間：2022-01-05 17:48:32" itemprop="dateCreated datePublished" datetime="2022-01-05T17:48:32+08:00">2022-01-05</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-16 14:37:57" itemprop="dateModified" datetime="2023-12-16T14:37:57+08:00">2023-12-16</time>
+      <time title="修改時間：2024-01-06 10:37:11" itemprop="dateModified" datetime="2024-01-06T10:37:11+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -970,7 +1459,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/docker/" itemprop="url" rel="index"><span itemprop="name">docker</span></a>
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
         </span>
     </span>
 
@@ -984,49 +1473,48 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>何謂Image</li>
+          <p><img src="https://i.imgur.com/K8xPWD7.png" alt="service"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>廣義的來說，服務可以是任何值、函式或是特性，<br>但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。<br>Angular將元件和服務區分開，<br>元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，<br>而像是向後端取得資料、檢核輸入或撰寫Log等等動作，<br>就會定義在服務裡面，再將服務注入到元件裡面使用。<br>如此一來，多個元件可以依賴同一個服務，<br>就能達到重複利用和模組化的效果，<br>另外也能讓元件輕量化，程式碼更整潔。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>依賴注入</li>
+<li>建立服務</li>
+<li>提供服務</li>
 </ul>
-<h2 id="何謂Image"><a href="#何謂Image" class="headerlink" title="何謂Image"></a>何謂Image</h2><p>Ref: </p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://cwhu.medium.com/docker-tutorial-101-c3808b899ac6">Docker Intro</a></li>
-<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/16047306/how-is-docker-different-from-a-virtual-machine#">Docker V.S. VM</a></li>
-</ul>
-<h2 id="Image-Layers"><a href="#Image-Layers" class="headerlink" title="Image Layers"></a>Image Layers</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image <span class="built_in">history</span></span><br></pre></td></tr></table></figure>
+<h2 id="依賴注入"><a href="#依賴注入" class="headerlink" title="依賴注入"></a>依賴注入</h2><p>Dependency Injection 是指依賴注入，簡稱就是 DI。<br>元件會根據需求，將所需要的服務注入到元件裡面，<br>而元件就能得到操控服務的權限。<br>以電商平台的例子來說，<br>產品元件和購物車元件，都會需要取得產品資訊，<br>這時候就能將取得產品資訊的邏輯定義在服務裡面。</p>
+<h2 id="建立服務"><a href="#建立服務" class="headerlink" title="建立服務"></a>建立服務</h2><p>在Angular中，如果要將一個類別定義為服務，需要用到 @Injectable 裝飾符，<br>以便讓Angular將它視為依賴並注入到元件裡面。</p>
+<ol>
+<li>注入器是主要的機制，Angular會在啟動專案時自動幫你建立，所以不需要自己建立注入器。</li>
+<li>注入器會建立管理依賴的容器，讓它們可以被重複利用。</li>
+<li>提供者會是一個物件，用來告訴注入器如何獲取或建立依賴。</li>
+</ol>
+<p>以官方的Hero Service為例，<br>有一個Hero元件，是用來顯示英雄清單的資料，<br>而資料則是透過Hero Service所取得。<br>因此在元件被實體化時，須將此依賴注入到元件裡面。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">DemoComponent</span> &#123;</span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params"><span class="keyword">private</span> heroService:HeroService</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>因為Image Layer的關係，所以不會儲存相同層的image data。<br>而一個image可能會有幾層layer</p>
-<ul>
-<li>env</li>
-<li>apt</li>
-<li>ubuntu</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker image insepct</span><br></pre></td></tr></table></figure>
-<p>查看image的資訊</p>
-<h2 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h2><p>Ref: <a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10191016?sc=hot">Dockerfile</a><br>Ref: <a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10192519">Build image</a></p>
-<h2 id="Container-lifetime-amp-Persistent-data"><a href="#Container-lifetime-amp-Persistent-data" class="headerlink" title="Container lifetime &amp; Persistent data"></a>Container lifetime &amp; Persistent data</h2><p>Container are usually immutable</p>
-<h3 id="Volumes"><a href="#Volumes" class="headerlink" title="Volumes"></a>Volumes</h3><p>Persistent Data </p>
-<ul>
-<li><p>建立mysql container</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True  mysql</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>查看container資訊的volumes &amp; mounts</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container inspect mysql</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>查看volumes</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume <span class="built_in">ls</span></span><br></pre></td></tr></table></figure>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume inspect [:<span class="built_in">id</span> || :name]</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>當建立新的container還是使用舊的資料，可以加上 -v 指定volume和mounts</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql-db:/var/lib/mysql  mysql</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>建立volume</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="Bind-Mounts"><a href="#Bind-Mounts" class="headerlink" title="Bind Mounts"></a>Bind Mounts</h3><p>location of data<br>可以和本機共享檔案</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker container run -d --name nginx</span><br><span class="line">%<span class="built_in">cd</span>%:/usr/share/nginx/html nginx</span><br></pre></td></tr></table></figure>
+<p>這時候注入器就會在容器尋找是否已存在Hero Service這一個依賴，<br>如果存在，則將此依賴開放給元件使用；<br>反之，就會在容器裡面新增依賴並開放給元件使用。</p>
+<p><img src="https://i.imgur.com/QHpW8UF.png" alt="DI"></p>
+<h2 id="提供服務"><a href="#提供服務" class="headerlink" title="提供服務"></a>提供服務</h2><p>你必須為服務註冊一個提供者(Provider)，這樣服務才能被使用。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Iejectable</span>(&#123;</span><br><span class="line">   <span class="attr">providedIn</span>:<span class="string">&#x27;root&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">HeroService</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker container <span class="built_in">exec</span> -it nginx bash</span><br></pre></td></tr></table></figure>
+<p>提供者可以被定義在服務的裝飾符裡面，<br>而 root 則表示此服務在整個專案裡面只會擁有一個，<br>每個元件透過注入來分享這一個服務。</p>
+<p>備註: 倘若使用 AngularCLI 建立服務，就會自動設定為 root。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ng generate service &lt;service-name&gt;</span><br></pre></td></tr></table></figure>
 
+<p>當然也可以將服務設定為特定模組所使用，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;</span><br><span class="line">  <span class="attr">providers</span>: [</span><br><span class="line">      <span class="title class_">HeroService</span>,</span><br><span class="line"> ],</span><br><span class="line"> ...</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務會被模組內的元件所共享。<br>又或者是特定元件，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>:    <span class="string">&#x27;app-hero-list&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./hero-list.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">providers</span>:  [<span class="title class_">HeroService</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務在該元件內所共享。<br>總結上述，服務的提供者可以為</p>
+<ul>
+<li>root - 根等級，表示整個專案</li>
+<li>ngModule - 模組等級，表示單一模組內</li>
+<li>Component - 元件等級，表示單一元件內</li>
+</ul>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/architecture-services">Angular service</a></li>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/dependency-injection">Angular DI</a></li>
+</ul>
 
       
     </div>
@@ -1053,7 +1541,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/12/23/javascript/javascript-scoping-intro/">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/pipe/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -1071,7 +1559,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/12/23/javascript/javascript-scoping-intro/" class="post-title-link" itemprop="url">Javascript Scoping Intro</a>
+          <a href="/2022/01/05/angular/pipe/" class="post-title-link" itemprop="url">Angular Pipe</a>
         </h2>
 
         <div class="post-meta-container">
@@ -1082,14 +1570,14 @@
       </span>
       <span class="post-meta-item-text">發表於</span>
 
-      <time title="創建時間：2022-12-23 17:30:17" itemprop="dateCreated datePublished" datetime="2022-12-23T17:30:17+08:00">2022-12-23</time>
+      <time title="創建時間：2022-01-05 17:47:01" itemprop="dateCreated datePublished" datetime="2022-01-05T17:47:01+08:00">2022-01-05</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-16 14:39:21" itemprop="dateModified" datetime="2023-12-16T14:39:21+08:00">2023-12-16</time>
+      <time title="修改時間：2024-01-06 10:37:07" itemprop="dateModified" datetime="2024-01-06T10:37:07+08:00">2024-01-06</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1097,7 +1585,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
         </span>
     </span>
 
@@ -1111,292 +1599,63 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>甚麼是 Scope </li>
-<li>3種型態的Scope</li>
-<li>Scope chain</li>
-<li>Lexical Environment</li>
-<li>Lexical Scoping</li>
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，<br>簡單來說，你可以將 pipe 視為一個function在Template裡面使用，<br>input  → pipe → output<br>舉例來說，<br>當日期的資料為 西元 2021&#x2F;05&#x2F;10，<br>就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>常用的 Pipe</li>
+<li>Pipe 使用方式</li>
+<li>自定義 Pipe</li>
 </ul>
-<h2 id="甚麼是-Scope"><a href="#甚麼是-Scope" class="headerlink" title="甚麼是 Scope"></a>甚麼是 Scope</h2><p>Scope 可以翻成 作用域，也就是指「變數如何被存取」，能用下面兩個問題來概括解釋。</p>
-<blockquote>
-<p>Where do variables live? </p>
-</blockquote>
-<blockquote>
-<p>Where can we access a certain variable? </p>
-</blockquote>
-<h2 id="3種型態的-Scope"><a href="#3種型態的-Scope" class="headerlink" title="3種型態的 Scope"></a>3種型態的 Scope</h2><ul>
-<li><p>Global Scope<br>全域變數，除了 Function Scope 和 Block Scope 所定義的變數，都在此範圍</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="number">1234</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">global</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(test);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="常用的-Pipe"><a href="#常用的-Pipe" class="headerlink" title="常用的 Pipe"></a>常用的 Pipe</h2><ul>
+<li><p>Date</p>
+<p>  將日期轉換為本地格式</p>
 </li>
-<li><p>Function Scope<br>在函式中宣告的變數，只能在函式中取用</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">test</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> a1 = <span class="number">1234</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(a1); <span class="comment">// ReferenceError: a1 is not defined</span></span><br></pre></td></tr></table></figure>
+<li><p>Upper Case</p>
+<p>  英文字母轉換為大寫</p>
 </li>
-<li><p>Block Scope<br>Block 指的是被大括號包起來的範圍，被宣告的變數只能在此範圍中存取</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> b1 = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">test</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span>(b1) &#123;</span><br><span class="line">      <span class="keyword">let</span> a1 = <span class="number">1234</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(a1); <span class="comment">// ReferenceError: a1 is not defined</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>Lower Case</p>
+<p>  英文字母轉換為小寫</p>
+</li>
+<li><p>Currency</p>
+<p>  將數字轉換為貨幣字串，格式也能在地化</p>
+</li>
+<li><p>Decimal</p>
+<p>  將數字轉換為有小數點的字串，格式也能在地化</p>
+</li>
+<li><p>Percent</p>
+<p>  將數字轉換為有百分比的字串，格式也能在地化</p>
+</li>
 </ul>
-<h2 id="Lexical-Scoping-和-Scope-Chain"><a href="#Lexical-Scoping-和-Scope-Chain" class="headerlink" title="Lexical Scoping 和 Scope Chain"></a>Lexical Scoping 和 Scope Chain</h2><p>Lexical Scoping 可以翻成「語彙範疇」，也就是指函式和Block的擺放位置，<br>變數能不能被取用是由擺放位置來決定，而不是函式呼叫的順序。</p>
-<p>至於 Scope Chain 則會依據 Lexical Scoping 來決定說，<br>變數能否向上尋找和取用(Variable Lookup)，<br>很重要的一點，外層Scope不能存取內層的Scope的變數，只會為單向取用。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> a1 = <span class="number">1234</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fun1</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> a2 = <span class="number">5678</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">function</span> <span class="title function_">fun2</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(a2); <span class="comment">// 5678</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">fun2</span>();</span><br><span class="line">    <span class="title function_">fun3</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fun3</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(a1);</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(a2); <span class="comment">// ReferenceError: a2 is not defined</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="title function_">fun1</span>();</span><br></pre></td></tr></table></figure>
+<h2 id="Pipe-使用方式"><a href="#Pipe-使用方式" class="headerlink" title="Pipe 使用方式"></a>Pipe 使用方式</h2><p>如果要使用 Pipe ， 就必須在Template使用 pipe operator  ( | )</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">today = <span class="keyword">new</span> <span class="title class_">Date</span>(<span class="number">2021</span>, <span class="number">0</span>, <span class="number">20</span>);</span><br></pre></td></tr></table></figure>
 
-<img src="/2022/12/23/javascript/javascript-scoping-intro/scope-chain.png" class="" title="Scope Chain">
-      
-    </div>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Jan 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
 
-    
-    
-    
+<h4 id="加上參數"><a href="#加上參數" class="headerlink" title="加上參數"></a>加上參數</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 2021-01-20 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123; today | date:&#x27;yyyy-MM-dd&#x27; &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
 
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
+<h4 id="Chain-Pipe"><a href="#Chain-Pipe" class="headerlink" title="Chain-Pipe"></a>Chain-Pipe</h4><p>如果想要使用多個Pipe，就在Pipe串接其他Pipe。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- WEDNESDAY, JANUARY 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date:&#x27;fullDate&#x27; | uppercase &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
 
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/12/23/javascript/javascript-execution-context/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術雜記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/12/23/javascript/javascript-execution-context/" class="post-title-link" itemprop="url">Javascript Execution Context</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2022-12-23 15:49:48" itemprop="dateCreated datePublished" datetime="2022-12-23T15:49:48+08:00">2022-12-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-16 14:39:25" itemprop="dateModified" datetime="2023-12-16T14:39:25+08:00">2023-12-16</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>甚麼是執行環境 execution context</li>
-<li>程式碼範例</li>
-</ul>
-<h2 id="甚麼是執行環境-execution-context"><a href="#甚麼是執行環境-execution-context" class="headerlink" title="甚麼是執行環境 execution context"></a>甚麼是執行環境 execution context</h2><p>所有JS的程式碼都會在執行環境中執行，<br>但只會有一個 Global exection context。<br>而每一個function則會在各自的exection context中執行。<br>因此執行環境可以分成兩種，</p>
+<h2 id="自定義-Pipe"><a href="#自定義-Pipe" class="headerlink" title="自定義 Pipe"></a>自定義 Pipe</h2><p>在某些時候，部分資料的轉換並沒有built-in Pipe可以使用，<br>那我們就可以透過客製化的Pipe來轉換資料，<br>而客製化Pipe在Template的使用方式也會如同built-in Pipe一樣。<br>舉例來說，當我取得學生的數學成績資料，發現成績都不甚理想，<br>故此想在畫面上多顯示加乘過後的成績。</p>
 <ul>
-<li>Global Execution context</li>
-<li>Function Execution context</li>
-</ul>
-<p>而每個execution context可分為建立階段和執行階段，</p>
-<ul>
-<li><p>建立階段: 參數和函式宣告式會被裝進execution context</p>
-<ul>
-<li>varialbe environment<ul>
-<li>let, const and var declartion</li>
-<li>functions</li>
-<li>arguments object</li>
-</ul>
+<li><p>建立 Class</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pipe的名稱必須為駝峰式命名，不能有底線</span></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
-<li>scope chain</li>
-<li>this keyword</li>
-</ul>
+<li><p>Implements Pipe Transform 介面</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>, <span class="title class_">PipeTransform</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> <span class="keyword">implements</span> <span class="title class_">PipeTransform</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">transform</span>(<span class="params">value: <span class="built_in">number</span>, multiplyParam: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">      <span class="comment">// value為分數，multiplyParam為加乘參數</span></span><br><span class="line">      <span class="keyword">return</span> value * multiplyParam;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>執行階段: 每一個execution context都會被放到call stack，stack會一直往上堆疊，最上面的會先被執行，執行完成後就會被拿掉。</p>
+<li><p>如果為手動建立需在ngModule宣告Pipe，避免發生找不到類別的錯誤</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;  </span><br><span class="line">  <span class="attr">declarations</span>: [<span class="title class_">MultiplyScorePipe</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在Template裡面使用 Pipe 來轉換資料</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Component</span>, <span class="title class_">OnInit</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;my-app&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./app.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">styleUrls</span>: [<span class="string">&#x27;./app.component.css&#x27;</span>]</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppComponent</span> <span class="keyword">implements</span> <span class="title class_">OnInit</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="attr">students</span>: &#123; <span class="attr">name</span>: <span class="built_in">string</span>; <span class="attr">mathScore</span>: <span class="built_in">number</span> &#125;[];</span><br><span class="line"></span><br><span class="line">  <span class="title function_">ngOnInit</span>(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">students</span> = [</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Bill&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">45</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;John&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">32</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Neil&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">15</span> &#125;</span><br><span class="line">    ];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;table&gt;</span><br><span class="line">  &lt;thead&gt;</span><br><span class="line">    &lt;tr&gt;</span><br><span class="line">      &lt;th&gt;學生名稱&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學原始成績&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學加乘成績&lt;/th&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/thead&gt;</span><br><span class="line">  &lt;tbody&gt;</span><br><span class="line">    &lt;tr *ngFor=&quot;let student of students&quot;&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.name &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore | multiplyScore:3.2 &#125;&#125;&lt;/td&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/tbody&gt;</span><br><span class="line">&lt;/table&gt;</span><br></pre></td></tr></table></figure>
+
+<p> <img src="https://i.imgur.com/X26NP0q.png" alt="demo"></p>
 </li>
 </ul>
-<h2 id="程式碼範例"><a href="#程式碼範例" class="headerlink" title="程式碼範例"></a>程式碼範例</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> a = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">first</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> b = <span class="number">2</span>;</span><br><span class="line">    <span class="keyword">const</span> c = <span class="title function_">second</span>();</span><br><span class="line">    <span class="keyword">return</span> b + c;   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">second</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> d = <span class="number">3</span>;</span><br><span class="line">    <span class="keyword">return</span> d;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> x = <span class="title function_">first</span>();</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/12/17/javascript/js-fundamental/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術雜記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/12/17/javascript/js-fundamental/" class="post-title-link" itemprop="url">Js Fundamental</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2022-12-17 15:07:57" itemprop="dateCreated datePublished" datetime="2022-12-17T15:07:57+08:00">2022-12-17</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2023-12-16 14:39:31" itemprop="dateModified" datetime="2023-12-16T14:39:31+08:00">2023-12-16</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Javascript/" itemprop="url" rel="index"><span itemprop="name">Javascript</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="What-is-JavaScript"><a href="#What-is-JavaScript" class="headerlink" title="What is JavaScript"></a>What is JavaScript</h2><ul>
-<li>High level<ul>
-<li>JS 不需要考慮記憶體或資源配置</li>
-</ul>
-</li>
-<li>Garbage collected<ul>
-<li>JS 會自動清除記憶體</li>
-</ul>
-</li>
-<li>Interpreted or just-in-time compiled<ul>
-<li>轉換成 Machine code 在 JS engine</li>
-</ul>
-</li>
-<li>Multi Paradigm<ul>
-<li>Procedural programming</li>
-<li>Object oriented programming (OOP)</li>
-<li>Functional programming (FP)</li>
-</ul>
-</li>
-<li>Prototype-based object oriented</li>
-<li>First-class functions<ul>
-<li>functions 被視為一種 變數</li>
-</ul>
-</li>
-<li>Dynamic<ul>
-<li>弱型別，變數可以在 runtime 改變型別</li>
-</ul>
-</li>
-<li>Single-threaded</li>
-<li>Non-blocking event loop<ul>
-<li>concurrency model 讓 Js engine 掌控多個任務在一個時間</li>
-<li>因為 JS 是走 single thread</li>
-<li>使用 eventloop 讓某些長時間運作的任務，可以在背景執行</li>
-</ul>
-</li>
-</ul>
-<h2 id="JS-Engine"><a href="#JS-Engine" class="headerlink" title="JS Engine"></a>JS Engine</h2><p>Program that executed JS code.<br>Every JS Engine have two kind of things, one is call stack, the other is heap.<br>Stack is execution context is out code get executed.<br>Heap where objects are stored in memory. </p>
-<p>甚麼是 compilation, interpretation<br>compilation 是 source code 先轉化成 machine code ， 會有一個binary file，然後在透過任何方式執行<br>interpretation 是 source coee 每轉一行 machine code 就執行一次 (line by line)</p>
-<p>Modern JS<br>Just-in-time (JIT) compilation<br>Source code也會直接轉化成 Machine code 但不會有檔案產生，並且會被馬上執行</p>
-<h3 id="當有程式碼進到-JS-Engine-流程："><a href="#當有程式碼進到-JS-Engine-流程：" class="headerlink" title="當有程式碼進到 JS Engine 流程："></a>當有程式碼進到 JS Engine 流程：</h3><ul>
-<li>Parsing ( Abstract Syntax Tree )</li>
-<li>Compilation (convert to machine code)</li>
-<li>Execution (發生在 call stack)</li>
-<li>Optimization (在 execution 期間)，增加效能加快速度</li>
-</ul>
-<h2 id="Runtime-in-the-browser"><a href="#Runtime-in-the-browser" class="headerlink" title="Runtime in the browser"></a>Runtime in the browser</h2><ul>
-<li>Js Engine<ul>
-<li>Heap</li>
-<li>Call stack</li>
-</ul>
-</li>
-<li>Web APIs<ul>
-<li>DOME</li>
-<li>Fetch API</li>
-<li>Timers</li>
-</ul>
-</li>
-<li>Callback queue<ul>
-<li>timer</li>
-<li>data</li>
-</ul>
-</li>
-<li>Event loop</li>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/pipes">pipes</a></li>
 </ul>
 
       
@@ -1416,6 +1675,9 @@
 
 
 
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一頁"></i></a>
+  </nav>
 
 </div>
   </main>

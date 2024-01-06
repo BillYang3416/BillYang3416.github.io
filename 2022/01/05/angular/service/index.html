@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言廣義的來說，服務可以是任何值、函式或是特性，但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。Angular將元件和服務區分開，元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，而像是向後端取得資料、檢核輸入或撰寫Log等等動作，就會定義在服務裡面，再將服務注入到元件裡面使用。如此一來，多個元件可以依賴同一個服務，就能達到重複利用和模組化的效果，另外也能讓元">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Angular Service">
+<meta property="og:url" content="http://billyang3416.github.io/project/2022/01/05/angular/service/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言廣義的來說，服務可以是任何值、函式或是特性，但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。Angular將元件和服務區分開，元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，而像是向後端取得資料、檢核輸入或撰寫Log等等動作，就會定義在服務裡面，再將服務注入到元件裡面使用。如此一來，多個元件可以依賴同一個服務，就能達到重複利用和模組化的效果，另外也能讓元">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://i.imgur.com/K8xPWD7.png">
+<meta property="og:image" content="https://i.imgur.com/QHpW8UF.png">
+<meta property="article:published_time" content="2022-01-05T09:48:32.000Z">
+<meta property="article:modified_time" content="2024-01-06T02:37:11.045Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="Angular">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/K8xPWD7.png">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2022/01/05/angular/service/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2022/01/05/angular/service/","path":"2022/01/05/angular/service/","title":"Angular Service"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Angular Service | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%9D%E8%B3%B4%E6%B3%A8%E5%85%A5"><span class="nav-number">3.</span> <span class="nav-text">依賴注入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BB%BA%E7%AB%8B%E6%9C%8D%E5%8B%99"><span class="nav-number">4.</span> <span class="nav-text">建立服務</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8B%99"><span class="nav-number">5.</span> <span class="nav-text">提供服務</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">6.</span> <span class="nav-text">參考資料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術雜記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/service/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Angular Service | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Angular Service
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-01-05 17:48:32" itemprop="dateCreated datePublished" datetime="2022-01-05T17:48:32+08:00">2022-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:37:11" itemprop="dateModified" datetime="2024-01-06T10:37:11+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><img src="https://i.imgur.com/K8xPWD7.png" alt="service"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>廣義的來說，服務可以是任何值、函式或是特性，<br>但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。<br>Angular將元件和服務區分開，<br>元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，<br>而像是向後端取得資料、檢核輸入或撰寫Log等等動作，<br>就會定義在服務裡面，再將服務注入到元件裡面使用。<br>如此一來，多個元件可以依賴同一個服務，<br>就能達到重複利用和模組化的效果，<br>另外也能讓元件輕量化，程式碼更整潔。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>依賴注入</li>
+<li>建立服務</li>
+<li>提供服務</li>
+</ul>
+<h2 id="依賴注入"><a href="#依賴注入" class="headerlink" title="依賴注入"></a>依賴注入</h2><p>Dependency Injection 是指依賴注入，簡稱就是 DI。<br>元件會根據需求，將所需要的服務注入到元件裡面，<br>而元件就能得到操控服務的權限。<br>以電商平台的例子來說，<br>產品元件和購物車元件，都會需要取得產品資訊，<br>這時候就能將取得產品資訊的邏輯定義在服務裡面。</p>
+<h2 id="建立服務"><a href="#建立服務" class="headerlink" title="建立服務"></a>建立服務</h2><p>在Angular中，如果要將一個類別定義為服務，需要用到 @Injectable 裝飾符，<br>以便讓Angular將它視為依賴並注入到元件裡面。</p>
+<ol>
+<li>注入器是主要的機制，Angular會在啟動專案時自動幫你建立，所以不需要自己建立注入器。</li>
+<li>注入器會建立管理依賴的容器，讓它們可以被重複利用。</li>
+<li>提供者會是一個物件，用來告訴注入器如何獲取或建立依賴。</li>
+</ol>
+<p>以官方的Hero Service為例，<br>有一個Hero元件，是用來顯示英雄清單的資料，<br>而資料則是透過Hero Service所取得。<br>因此在元件被實體化時，須將此依賴注入到元件裡面。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">DemoComponent</span> &#123;</span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params"><span class="keyword">private</span> heroService:HeroService</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>這時候注入器就會在容器尋找是否已存在Hero Service這一個依賴，<br>如果存在，則將此依賴開放給元件使用；<br>反之，就會在容器裡面新增依賴並開放給元件使用。</p>
+<p><img src="https://i.imgur.com/QHpW8UF.png" alt="DI"></p>
+<h2 id="提供服務"><a href="#提供服務" class="headerlink" title="提供服務"></a>提供服務</h2><p>你必須為服務註冊一個提供者(Provider)，這樣服務才能被使用。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Iejectable</span>(&#123;</span><br><span class="line">   <span class="attr">providedIn</span>:<span class="string">&#x27;root&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">HeroService</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>提供者可以被定義在服務的裝飾符裡面，<br>而 root 則表示此服務在整個專案裡面只會擁有一個，<br>每個元件透過注入來分享這一個服務。</p>
+<p>備註: 倘若使用 AngularCLI 建立服務，就會自動設定為 root。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ng generate service &lt;service-name&gt;</span><br></pre></td></tr></table></figure>
+
+<p>當然也可以將服務設定為特定模組所使用，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;</span><br><span class="line">  <span class="attr">providers</span>: [</span><br><span class="line">      <span class="title class_">HeroService</span>,</span><br><span class="line"> ],</span><br><span class="line"> ...</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務會被模組內的元件所共享。<br>又或者是特定元件，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>:    <span class="string">&#x27;app-hero-list&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./hero-list.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">providers</span>:  [<span class="title class_">HeroService</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務在該元件內所共享。<br>總結上述，服務的提供者可以為</p>
+<ul>
+<li>root - 根等級，表示整個專案</li>
+<li>ngModule - 模組等級，表示單一模組內</li>
+<li>Component - 元件等級，表示單一元件內</li>
+</ul>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/architecture-services">Angular service</a></li>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/dependency-injection">Angular DI</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Angular/" rel="tag"># Angular</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/01/05/angular/pipe/" rel="prev" title="Angular Pipe">
+                  <i class="fa fa-chevron-left"></i> Angular Pipe
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2023/12/12/golang/clean-architecture/" rel="next" title="Clean Architecture 簡潔架構">
+                  Clean Architecture 簡潔架構 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

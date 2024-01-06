@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言在了解 @Input 和 @Output 這兩個裝飾符(decorator)如何建立元件互動前，請先了解甚麼是屬性繫結和事件繫結。 目錄 @Input @Output  @Input  所謂的 @Input decorator，其實就是父元件透過屬性繫結的方式將資料傳送到子元件，資料來源是父元件的屬性，資料接收者是子元件加上@Input 裝飾符的屬性。  子元件宣告一個屬性，並且在前面加上 @">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用 @Input &amp; @Ouput 實現元件互動">
+<meta property="og:url" content="http://billyang3416.github.io/project/2022/01/05/angular/component-interact/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言在了解 @Input 和 @Output 這兩個裝飾符(decorator)如何建立元件互動前，請先了解甚麼是屬性繫結和事件繫結。 目錄 @Input @Output  @Input  所謂的 @Input decorator，其實就是父元件透過屬性繫結的方式將資料傳送到子元件，資料來源是父元件的屬性，資料接收者是子元件加上@Input 裝飾符的屬性。  子元件宣告一個屬性，並且在前面加上 @">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="http://billyang3416.github.io/2022/01/05/angular/component-interact/input.png">
+<meta property="og:image" content="http://billyang3416.github.io/2022/01/05/angular/component-interact/input-result.png">
+<meta property="og:image" content="http://billyang3416.github.io/2022/01/05/angular/component-interact/output.png">
+<meta property="article:published_time" content="2022-01-05T09:32:47.000Z">
+<meta property="article:modified_time" content="2024-01-06T02:37:18.866Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="Angular">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://billyang3416.github.io/2022/01/05/angular/component-interact/input.png">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2022/01/05/angular/component-interact/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2022/01/05/angular/component-interact/","path":"2022/01/05/angular/component-interact/","title":"使用 @Input & @Ouput 實現元件互動"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用 @Input & @Ouput 實現元件互動 | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Input"><span class="nav-number">3.</span> <span class="nav-text">@Input</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Output"><span class="nav-number">4.</span> <span class="nav-text">@Output</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">參考資料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術雜記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/component-interact/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術雜記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用 @Input & @Ouput 實現元件互動 | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用 @Input & @Ouput 實現元件互動
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-01-05 17:32:47" itemprop="dateCreated datePublished" datetime="2022-01-05T17:32:47+08:00">2022-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:37:18" itemprop="dateModified" datetime="2024-01-06T10:37:18+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在了解 @Input 和 @Output 這兩個裝飾符(decorator)如何建立元件互動前，<br>請先了解甚麼是屬性繫結和事件繫結。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>@Input</li>
+<li>@Output</li>
+</ul>
+<h2 id="Input"><a href="#Input" class="headerlink" title="@Input"></a>@Input</h2><img src="/2022/01/05/angular/component-interact/input.png" class="" title="This is an input image">
+
+<p>所謂的 @Input decorator，<br>其實就是父元件透過屬性繫結的方式將資料傳送到子元件，<br>資料來源是父元件的屬性，資料接收者是子元件加上@Input 裝飾符的屬性。</p>
+<ol>
+<li><p>子元件宣告一個屬性，並且在前面加上 @Input</p>
+ <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Component</span>, <span class="title class_">Input</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>; <span class="comment">// First, import Input</span></span><br><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;app-child&#x27;</span>,</span><br><span class="line">  ...</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">ChildComponent</span> &#123;</span><br><span class="line">  <span class="meta">@Input</span>() <span class="attr">item</span>: <span class="built_in">string</span>; <span class="comment">// decorate the property with @Input()</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;p&gt;</span><br><span class="line">  Today&#x27;s item: &#123;&#123;item&#125;&#125;</span><br><span class="line">&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>父元件的Template放入子元件的selector</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;app-item-detail&gt;&lt;/app-item-detail&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>將父元件的屬性使用屬性繫結傳遞給子元件</p>
+ <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;app-parent&#x27;</span>,</span><br><span class="line">  ...</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">ParentComponent</span> &#123;</span><br><span class="line">  currentItem = <span class="string">&#x27;Television&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">app-child</span> [<span class="attr">item</span>]=<span class="string">&quot;currentItem&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">app-child</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<img src="/2022/01/05/angular/component-interact/input-result.png" class="" title="This is an input result image"></li>
+</ol>
+<h2 id="Output"><a href="#Output" class="headerlink" title="@Output"></a>@Output</h2><img src="/2022/01/05/angular/component-interact/output.png" class="" title="This is an output image">
+
+<p>所謂的 @Output decorator，<br>就是子元件透過事件綁定傳送資料給父元件，<br>資料來源是子元件自定義的事件(custom event)，資料接收者是父元件的方法。<br>使用 @Output 一定要搭配 EventEmiter 的型別使用，<br>EventEmitter透過emit()這個方法來觸發一個自定義的事件，<br>父元件就會接收事件，並做出回應。</p>
+<ol>
+<li><p>在子元件有一個刪除按鈕，當使用者點擊 ‘刪除’，子元件會觸發自定義的刪除事件</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;button (click)=&quot;delete()&quot;&gt;Delete&lt;/button&gt;</span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// This component makes a request but it can&#x27;t actually delete a hero.</span></span><br><span class="line"><span class="meta">@Output</span>() deleteRequest = <span class="keyword">new</span> <span class="title class_">EventEmitter</span>&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line"></span><br><span class="line"><span class="title function_">delete</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">deleteRequest</span>.<span class="title function_">emit</span>(<span class="string">&#x27;delete now&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在父元件的Template綁定事件，並使用 $event 取得子元件回傳的字串</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;app-child (deleteRequest)=&quot;delete($event)&quot;&gt;&lt;/app-child&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在父元件的Component新增 處理刪除事件的方法</p>
+ <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">delete</span>(<span class="params">event: <span class="built_in">string</span></span>) &#123;</span><br><span class="line">    <span class="title function_">alert</span>(event);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/inputs-outputs">Angular inputs &amp; outputs</a></li>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/event-binding">Angular event binding</a></li>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/component-interaction">Angular component interaction</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Angular/" rel="tag"># Angular</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/01/05/angular/component-intro/" rel="prev" title="Angular Component">
+                  <i class="fa fa-chevron-left"></i> Angular Component
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/01/05/angular/directive/" rel="next" title="Angular Directive">
+                  Angular Directive <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
