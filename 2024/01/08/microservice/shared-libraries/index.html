@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.1.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha256-AbA177XfpSnFEvgpYu1jMygiLabzPCJCRIBtR5jGc0k=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="前言本篇文章首先從思考問題出發，探討為甚麼我們需要在微服務中使用共用函式庫，以及使用共用函式庫的優缺點，最後則說明設計時可以遵循的 Best Practices。 目錄 為甚麼要設計共用函式庫 使用共用函式庫的優點和缺點 設計共用函式庫的 Best Practices  為甚麼要設計共用函式庫在微服務的架構當中，我們會將一個系統切分成好幾顆服務，以電商系統為例，我們可能就會切分成訂單、庫存和交易等">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何設計微服務的共用函式庫">
+<meta property="og:url" content="http://billyang3416.github.io/project/2024/01/08/microservice/shared-libraries/index.html">
+<meta property="og:site_name" content="B1LLGOAT">
+<meta property="og:description" content="前言本篇文章首先從思考問題出發，探討為甚麼我們需要在微服務中使用共用函式庫，以及使用共用函式庫的優缺點，最後則說明設計時可以遵循的 Best Practices。 目錄 為甚麼要設計共用函式庫 使用共用函式庫的優點和缺點 設計共用函式庫的 Best Practices  為甚麼要設計共用函式庫在微服務的架構當中，我們會將一個系統切分成好幾顆服務，以電商系統為例，我們可能就會切分成訂單、庫存和交易等">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2024-01-08T07:20:55.000Z">
+<meta property="article:modified_time" content="2024-01-08T12:40:58.928Z">
+<meta property="article:author" content="Bill Yang">
+<meta property="article:tag" content="Microservice">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://billyang3416.github.io/project/2024/01/08/microservice/shared-libraries/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-TW","comments":true,"permalink":"http://billyang3416.github.io/project/2024/01/08/microservice/shared-libraries/","path":"2024/01/08/microservice/shared-libraries/","title":"如何設計微服務的共用函式庫"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>如何設計微服務的共用函式庫 | B1LLGOAT</title>
+  
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切換導航欄" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">B1LLGOAT</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">比爾羊的技術部落格</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>關於</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>標籤</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分類</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>歸檔</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目錄
+        </li>
+        <li class="sidebar-nav-overview">
+          本站概要
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E9%8C%84"><span class="nav-number">2.</span> <span class="nav-text">目錄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%82%BA%E7%94%9A%E9%BA%BC%E8%A6%81%E8%A8%AD%E8%A8%88%E5%85%B1%E7%94%A8%E5%87%BD%E5%BC%8F%E5%BA%AB"><span class="nav-number">3.</span> <span class="nav-text">為甚麼要設計共用函式庫</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%85%B1%E7%94%A8%E5%87%BD%E5%BC%8F%E5%BA%AB%E7%9A%84%E5%84%AA%E9%BB%9E%E5%92%8C%E7%BC%BA%E9%BB%9E"><span class="nav-number">4.</span> <span class="nav-text">使用共用函式庫的優點和缺點</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%84%AA%E9%BB%9E"><span class="nav-number">4.1.</span> <span class="nav-text">優點</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%BA%E9%BB%9E"><span class="nav-number">4.2.</span> <span class="nav-text">缺點</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A8%AD%E8%A8%88%E5%85%B1%E7%94%A8%E5%87%BD%E5%BC%8F%E5%BA%AB%E7%9A%84-Best-Practices"><span class="nav-number">5.</span> <span class="nav-text">設計共用函式庫的 Best Practices</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B5%90%E8%AB%96"><span class="nav-number">6.</span> <span class="nav-text">結論</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Bill Yang</p>
+  <div class="site-description" itemprop="description">技術札記</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">文章</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分類</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">標籤</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="回到頂端">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-TW">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/08/microservice/shared-libraries/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="如何設計微服務的共用函式庫 | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何設計微服務的共用函式庫
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+      
+
+      <time title="創建時間：2024-01-08 15:20:55 / 修改時間：20:40:58" itemprop="dateCreated datePublished" datetime="2024-01-08T15:20:55+08:00">2024-01-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Microservice/" itemprop="url" rel="index"><span itemprop="name">Microservice</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章首先從思考問題出發，探討為甚麼我們需要在微服務中使用共用函式庫，<br>以及使用共用函式庫的優缺點，最後則說明設計時可以遵循的 Best Practices。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>為甚麼要設計共用函式庫</li>
+<li>使用共用函式庫的優點和缺點</li>
+<li>設計共用函式庫的 Best Practices</li>
+</ul>
+<h2 id="為甚麼要設計共用函式庫"><a href="#為甚麼要設計共用函式庫" class="headerlink" title="為甚麼要設計共用函式庫"></a>為甚麼要設計共用函式庫</h2><p>在微服務的架構當中，我們會將一個系統切分成好幾顆服務，<br>以電商系統為例，我們可能就會切分成訂單、庫存和交易等服務，<br>而在撰寫這些服務時會出現通用的功能，像是日誌。<br>如果每一顆服務都要額外去寫日誌功能，就會違反 <code>DRY(Don&#39;t Repeat Yourself)</code> 的精神，<br>也會讓各團隊出現重工的情況，浪費了大量的時間成本。<br>透過設計這些微服務會使用到的共用函式庫，讓多顆服務可以複用，<br>一來確保程式碼不會重複，二來也能保持服務使用第三方套件的一致性。<br>藉此來加快團隊的開發效率。</p>
+<h2 id="使用共用函式庫的優點和缺點"><a href="#使用共用函式庫的優點和缺點" class="headerlink" title="使用共用函式庫的優點和缺點"></a>使用共用函式庫的優點和缺點</h2><h3 id="優點"><a href="#優點" class="headerlink" title="優點"></a>優點</h3><ul>
+<li>不會出現重複的程式碼</li>
+<li>減少團隊間的重工，避免浪費人力和時間成本</li>
+<li>各服務能保持對第三方套件的一致性，避免發生版本間的衝突</li>
+<li>當有 <code>Bug</code> 出現時，只需要修改共用函式庫；不需要手動改每一顆服務</li>
+</ul>
+<h3 id="缺點"><a href="#缺點" class="headerlink" title="缺點"></a>缺點</h3><ul>
+<li>過於依賴共用函式庫，會導致各服務之間的耦合度增加</li>
+<li>當共用函式庫更新時，所有服務可能都會需要同步調整版本和程式碼</li>
+</ul>
+<h2 id="設計共用函式庫的-Best-Practices"><a href="#設計共用函式庫的-Best-Practices" class="headerlink" title="設計共用函式庫的 Best Practices"></a>設計共用函式庫的 Best Practices</h2><p>在設計共用函式庫時，有一些 Best Practices 可以遵循:</p>
+<ul>
+<li>弄清楚共用函式庫的需求和功能，讓其符合單一責任的原則避免多餘的程式碼</li>
+<li>設計時要專注在功能上，但與服務的耦合度要低，這樣共用函式庫改動時就能減少對服務的影響</li>
+<li>在共用函式庫中多使用介面去增加配置的靈活性，一是方便函式庫的擴展，二是讓服務也能客製函式庫的功能</li>
+<li>共用函式庫要能讓團隊簡易使用和上手，減少學習的時間成本</li>
+<li>更新函式庫應考慮兼容性，避免服務因函式庫的影響而改動程式碼</li>
+</ul>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在微服務中設計共用函式庫，其主要目的就是為了讓各服務能更專注於自身的商業邏輯，<br>一是減少程式碼重複的現象，二是確保服務使用第三方套件一致性。<br>但在設計共用函式庫就必須考慮和服務的耦合度，將改動的影響最小化，<br>避免服務因為函式庫的更新而調整，反而增加團隊的時間成本和溝通成本。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Microservice/" rel="tag"># Microservice</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2024/01/05/microservice/async-communication/" rel="prev" title="淺談微服務架構的非同步機制">
+                  <i class="fa fa-chevron-left"></i> 淺談微服務架構的非同步機制
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2024/01/08/database/acid/" rel="next" title="淺談關聯資料庫的 ACID">
+                  淺談關聯資料庫的 ACID <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Bill Yang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 強力驅動
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

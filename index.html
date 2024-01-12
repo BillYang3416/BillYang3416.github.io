@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -168,6 +168,273 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/08/database/acid/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/01/08/database/acid/" class="post-title-link" itemprop="url">淺談關聯資料庫的 ACID</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2024-01-08 20:44:17" itemprop="dateCreated datePublished" datetime="2024-01-08T20:44:17+08:00">2024-01-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-12 23:39:11" itemprop="dateModified" datetime="2024-01-12T23:39:11+08:00">2024-01-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Database/" itemprop="url" rel="index"><span itemprop="name">Database</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在本篇文章中，我們會先介紹甚麼是 transaction，<br>因為 transaction 是 ACID 的關鍵概念，必須先理解 transaction 才能懂這4個特性要達到的目的，<br>而這4個特性分別是 <code>Atomicity</code>、<code>Isolation</code>、<code>Consistency</code> 和 <code>Durability</code>，<br>也是關聯式資料庫運作時所遵循的原理。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>Transaction</li>
+<li>Atomicity</li>
+<li>Isolation</li>
+<li>Consistency</li>
+<li>Durability</li>
+</ul>
+<h2 id="Transaction"><a href="#Transaction" class="headerlink" title="Transaction"></a>Transaction</h2><p>甚麼是 Transaction ?<br>Transaction 在關聯式資料庫的概念就是一組 DML (Data Manipulation Language) 的集合，<br>像是我們平常看到 Insert、Update、Delete 和 Select，<br>將這些排列組合起來後就可以稱為一個 Transaction。<br>以銀行轉帳為例，假設大明想要轉帳一百塊給小王，<br>那銀行就會先查詢出大明的帳戶，接著就會先扣除大明帳戶的一百塊，最後將小王的帳戶增加一百塊。<br>在這樣的流程裡，其實就包含3個 SQL Queries，分別是 Select、Update 和 Update，<br>將其組合起來就會是一個 Transaction。</p>
+<p>另外 Transaction 從開始到結束，大概有這幾種狀態:</p>
+<ul>
+<li>Begin (開始)</li>
+<li>Check Constraints (確認條件)</li>
+<li>Execution of SQL Queries (執行)</li>
+<li>Commit &#x2F; Rollback (生效或回滾)</li>
+</ul>
+<p>接下來我們在用圖來示範轉帳的案例會讓大家更清楚些，<br>在正常的情況下，因為大明的帳戶有超過 200 塊，所以最後 Transaction 就會 Commit，<br>代表這次所執行的 SQL Queries 都成功，轉帳也會順利轉進各自的帳戶。</p>
+<img src="/2024/01/08/database/acid/transaction-commit.png" class="" title="This is an transaction-commit image">
+
+<p>但假設說今天大明的帳戶沒有超過 200 塊，只有 50 塊，<br>當 Transaction 要執行 Update Account1 的時候就會發生錯誤，<br>因為沒有滿足 Check Constraints (BALANCE &gt; 200)，接下來就會直接執行 Rollback 代表轉帳失敗。</p>
+<img src="/2024/01/08/database/acid/transaction-rollback.png" class="" title="This is an transaction-rollback image">
+
+<p>在了解 Transaction 之後，接著我們來看四大特性，分別是<br>Atomicity、Isolation、Consistency 和 Durablilty。</p>
+<h2 id="Atomicity"><a href="#Atomicity" class="headerlink" title="Atomicity"></a>Atomicity</h2><blockquote>
+<p>Atomicity refers to all or nothing.</p>
+</blockquote>
+<p>所謂的 Atomicity 就是在一個 transaction 中，所有執行的 SQL Queries 要全部成功或全部失敗，<br>也就是說只要有一個 rollback，即便它已經是最後一個執行的 SQL Query，<br>前面所成功的 SQL Queries 也都要 rollback。<br>這邊我們一樣拿轉帳的例子來說明，假設大明的帳戶已經被扣款了，<br>而就在這中間幾秒的時間，DB被強制關閉了，小王的帳戶餘額並沒有增加，<br>如果不遵循 Atomicity，這一百塊就會不見，對於銀行客戶來說就會是一個很嚴重的問題，<br>但如果遵循 Atomicity，DB 做了 rollback，這樣資料就會存在，對我們的影響就是重做一次交易而已。<br>因此 Atomicity 相當重要，一來是能確保資料的一致性，二來是在發生錯誤時，也能夠保護資料不受到影響。</p>
+<img src="/2024/01/08/database/acid/atomicity.png" class="" title="This is an atomicity image">
+
+<h2 id="Isolation"><a href="#Isolation" class="headerlink" title="Isolation"></a>Isolation</h2><p>接下來我們來了解 <code>Isolation</code>，<br>大家先試想看看，假設我們架設了一個電商網站，<br>是不是就會有許多的 User 在同一時間會對商品瀏覽、下單，<br>而這時候網站的前後端就會開始資料交換，而後端就要向 DB 取得資料或異動資料。<br>這就代表 DB 的 Transaction 大多都會是 <code>Concurrent</code>（並行），<br>在這樣的狀況下，一個 transaction 被另一個 transaction 影響後所產生的現象，<br>我們就會稱作 <code>Read Phenomena</code>。<br>而要解決 <code>Read Phenomena</code> 的問題，<br>就要使用 <code>Isolation Level</code> 來確保資料的正確性和一致性，<br>讓 transaction 不會受到 <code>Concurrent</code> 的影響，獨立的執行 SQL Queries。</p>
+<h3 id="Read-Phenomena"><a href="#Read-Phenomena" class="headerlink" title="Read Phenomena"></a>Read Phenomena</h3><p>在 Read Phenomena 中，有四種現象分別是 Dirty Read、Non-repeatable Read、Phantom Read 和 Lost Update。</p>
+<h4 id="Dirty-Read"><a href="#Dirty-Read" class="headerlink" title="Dirty Read"></a>Dirty Read</h4><p>當我們在一個 Transaction 中，查詢到其它 Transaction 尚未 Commit 的資料異動，<br>在還沒 Commit 之前，這種資料異動都屬於髒資料，代表還未生效，這種現象就會稱為 <code>Dirty Read</code>。<br>這邊我們用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>在執行第二次之前，TX2 會先改變產品1的銷售數量，藉而影響 TX1 的第二次查詢結果，<br>如果 TX2 並沒有 Commit 而是 Rollback，那 TX1 所產生的資料就是錯誤的。</p>
+<img src="/2024/01/08/database/acid/dirty-read.png" class="" title="This is an dirty read image">
+
+<h4 id="Non-repeatable-Read"><a href="#Non-repeatable-Read" class="headerlink" title="Non-repeatable Read"></a>Non-repeatable Read</h4><p>在一個 transaction 中對同一筆資料做了兩次查詢，而查詢結果卻不相同，<br>這是因為受到另一個 transaction 對相同的資料做 Commit 讓同筆資料異動生效，<br>而這就是 <code>Non-repeatable Read</code> 的現象。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>在執行第二次之前，TX2 會先改變產品1的銷售數量且 <code>Commit</code>，藉而影響 TX1 的第二次查詢結果。</p>
+<img src="/2024/01/08/database/acid/non-repeatable-read.png" class="" title="This is an non-repeatable read image">
+
+<h4 id="Phantom-Read"><a href="#Phantom-Read" class="headerlink" title="Phantom Read"></a>Phantom Read</h4><p>在一個 transaction 中對相同資料做了兩次範圍的查詢，而查詢結果卻不相同，<br>這是因為受到另一個 transaction 對相同資料做了新增或刪除並且 Commit，<br>而這就是 <code>Phantom Read</code> 的現象。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>而這兩個指令都是 <code>ragne query</code>。<br>在執行第二次之前，TX2 會先新增產品3且 <code>Commit</code>，藉而影響 TX1 的第二次查詢結果。<br>Phantom Read 和 Non-repeatable Read 的差別就在於：<br>Phantom Read 通常是發生在資料表有被新增或刪除，<br>而 Non-repeatable Read 則是同筆資料有被異動的情況下發生。</p>
+<img src="/2024/01/08/database/acid/phantom-read.png" class="" title="This is an phantom read image">
+
+<h4 id="Lost-Update"><a href="#Lost-Update" class="headerlink" title="Lost Update"></a>Lost Update</h4><p>在一個 transaction 中，我們先對一筆資料做異動，<br>然而另一個 transaction 也同時對同筆資料做異動且 Commit，<br>這個就會導致第一個 transaction 在查詢同筆資料時，<br>得到的結果不是自身 transaction 所異動的資料，而這就是 <code>Lost Update</code>。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會先對產品2執行一次 Update 指令，<br>接下來 TX2 同時對產品2也執行 Update 指令且 <code>Commit</code>，<br>藉而就影響 TX1 的第二次查詢，銷售總額不是 TX1 調整數量的結果。</p>
+<img src="/2024/01/08/database/acid/lost-update.png" class="" title="This is an lost update image">
+
+<h3 id="Isolation-Level"><a href="#Isolation-Level" class="headerlink" title="Isolation Level"></a>Isolation Level</h3><p>前面我們說明了四種在 transaction 並行會發生的現象，<br>也了解到每一種現象發生時可能都會導致資料不一致或資料遺失的狀況，<br>這個絕對是我們需要去避免的，<br>因此資料庫會使用 <code>Isolation Level</code> 來解決 <code>Read Phenomena</code>。</p>
+<p>下圖取自維基百科，這張表格完美了詮釋各個 Isolation level 解決了哪些現象，</p>
+<img src="/2024/01/08/database/acid/isolation-levels.png" class="" title="This is an isolation levels image">
+
+<ul>
+<li><p>Read Uncommitted</p>
+<p>在 transaction 執行期間，可以拿到其他 transaction 尚未 commit 的資料，<br>而這就無法避免發生 <code>Dirty Read</code> </p>
+</li>
+<li><p>Read Committed</p>
+<p>在 transaction 執行期間，可以拿到其他 transaction commit 後的結果，<br>但前面提到的 <code>Non-repeatable Read</code> 或 <code>Lost Update</code> 就有可能發生。<br>另外大多的資料庫都會使用這個作為預設的 Isolation Level</p>
+</li>
+<li><p>Repeatable Read</p>
+<p>當 transaction 開始執行時，如有資料被讀取到，資料庫就會將其鎖住，避免其他 transaction 對同筆資料做異動，而這就不會發生 <code>Non-repeatable Read</code> 和 <code>Lost Update</code></p>
+</li>
+<li><p>Serializable</p>
+<p>前面提到的 <code>Repeatable Read</code> 可能只是鎖住單個 Row，<br>但如果遇到資料表被新增或刪除時，還是無法避免 <code>Phantom Read</code>。<br>因此 Serializable 可以針對單個 Row 、範圍性的 Query 或是整張表給上鎖，<br>當 transaction 執行期間，其他 transaction 必須等到鎖釋放後才能異動資料。<br>在這種情況下，資料雖然最安全，但效能也相對差勁，因此不太常被使用</p>
+</li>
+</ul>
+<p>最後有一個重點要注意，就是不同的資料庫在 <code>Isolation Level</code> 所使用的機制不盡相同，<br>像 Postgres 在 <code>Repeatable Read</code> 就使用了 <code>Snapshot</code> 的機制，<br><code>Snapshot</code> 是指當 transaction 開始執行前，會將要查詢的資料做一個快照，<br>而快照在執行期間不會有變動，因此就不會發生 <code>Phantom Read</code> 的現象。<br>所以在使用 <code>Isolation level</code> 時，記得要考慮到資料庫的特性。</p>
+<h2 id="Consistency"><a href="#Consistency" class="headerlink" title="Consistency"></a>Consistency</h2><p>接下來我們要來介紹 <code>Consistency</code>，<br>所謂的 Consistency 就是在 transaction 執行時，資料庫要確保資料是符合 <code>Constraint</code> (限制條件)，<br>藉此讓資料維持一致性和正確性。<br>常見的 <code>Constraint</code> 大概有這幾種：</p>
+<ul>
+<li><p>Data Type</p>
+<p>資料必須符合 Schema 所規範的資料型別</p>
+</li>
+<li><p>Range </p>
+<p>在前面帳戶轉帳的例子，我們確認帳戶在轉帳前是否有超過兩百塊，<br>這一種就算是 <code>Range Constraint</code></p>
+</li>
+<li><p>Uniqueness</p>
+<p>唯一性，代表該鍵值在整張資料表中只能被一筆資料所擁有</p>
+</li>
+<li><p>Referential Integrity</p>
+<p>當兩張 table 要建立關聯時，我們會使用 foreign key 去建立兩張表的關係。<br>這邊可以舉一個例子，在餐廳裡，我們可能會有客戶和訂單的資料表，那客戶中就會存放客戶ID、聯絡資訊和姓名等等，<br>至於訂單一定是有客戶才會產生的，因此我們會在訂單的資料表設定客戶ID作為訂單的 FK。<br>接下來假設我們要新增訂單的資料時，他就會確認訂單的客戶ID是否有出現在客戶的資料表，<br>如果沒有就代表客戶不存在，這筆訂單就會建立失敗，<br>反之，如果我們要刪除客戶的資料時，也必須確認訂單中都沒有這個客戶ID。</p>
+</li>
+</ul>
+<h2 id="Durability"><a href="#Durability" class="headerlink" title="Durability"></a>Durability</h2><p>前面提到的 <code>Atomicity</code>、<code>Isolation</code> 和 <code>Consistency</code> 基本上都是確保 trsanction 執行期間的正確性，<br>那最後要提到 <code>Durability</code> 則是要確保當 transaction commit 後，<br>資料的狀態就會是 <code>persistent</code>，並且必須存進 <code>non volatile</code> 的儲存位置，像是硬碟，<br>即使遇到關機或錯誤等狀況，資料也都要能還原再儲存。<br>而通常資料庫會使用 <code>WAL</code>(Write-Ahead Logging)的機制來確保 <code>Durablilty</code>，<br>也就是說每筆資料的異動一定都會先寫下 Log，<br>因此即便在 transaction commit 後，資料的異動尚未 <code>flushing</code> 到儲存位置(硬碟)時，<br>這時候如果 DB 突然被關閉了，還是能透過 Log 來進行還原，藉此確保了 <code>Durablilty</code>。</p>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在本文中，我們先說明了何謂是 transaction，因為可以看到 ACID 每一個特性都和 transaction 有關，<br>所以必須先理解 transaction 再來談四個特性。<br>Atomicity 確保 transaction 的 SQL Queries 必須全部成功或全部失敗，<br>而 Isolation 則是確保 transaction 的獨立性，避免受到並行 transaction 的影響導致資料不一致或遺失，<br>再來 Consistency 則透過條件限制 transaction 的執行，確保資料的一致性和正確性，<br>最後 Durablity 則是確保 transaction commit 後，資料必須存入不受電力影響的儲存位置像是硬碟，<br>並且在遇到關機或錯誤等狀況時，也會有 WAL 的機制讓資料可以還原並儲存。<br>總結來說，在資料庫中 ACID 是非常重要的概念，也是關聯式資料庫運作時所遵循的原理。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/08/microservice/shared-libraries/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/01/08/microservice/shared-libraries/" class="post-title-link" itemprop="url">如何設計微服務的共用函式庫</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+      
+
+      <time title="創建時間：2024-01-08 15:20:55 / 修改時間：20:40:58" itemprop="dateCreated datePublished" datetime="2024-01-08T15:20:55+08:00">2024-01-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Microservice/" itemprop="url" rel="index"><span itemprop="name">Microservice</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章首先從思考問題出發，探討為甚麼我們需要在微服務中使用共用函式庫，<br>以及使用共用函式庫的優缺點，最後則說明設計時可以遵循的 Best Practices。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>為甚麼要設計共用函式庫</li>
+<li>使用共用函式庫的優點和缺點</li>
+<li>設計共用函式庫的 Best Practices</li>
+</ul>
+<h2 id="為甚麼要設計共用函式庫"><a href="#為甚麼要設計共用函式庫" class="headerlink" title="為甚麼要設計共用函式庫"></a>為甚麼要設計共用函式庫</h2><p>在微服務的架構當中，我們會將一個系統切分成好幾顆服務，<br>以電商系統為例，我們可能就會切分成訂單、庫存和交易等服務，<br>而在撰寫這些服務時會出現通用的功能，像是日誌。<br>如果每一顆服務都要額外去寫日誌功能，就會違反 <code>DRY(Don&#39;t Repeat Yourself)</code> 的精神，<br>也會讓各團隊出現重工的情況，浪費了大量的時間成本。<br>透過設計這些微服務會使用到的共用函式庫，讓多顆服務可以複用，<br>一來確保程式碼不會重複，二來也能保持服務使用第三方套件的一致性。<br>藉此來加快團隊的開發效率。</p>
+<h2 id="使用共用函式庫的優點和缺點"><a href="#使用共用函式庫的優點和缺點" class="headerlink" title="使用共用函式庫的優點和缺點"></a>使用共用函式庫的優點和缺點</h2><h3 id="優點"><a href="#優點" class="headerlink" title="優點"></a>優點</h3><ul>
+<li>不會出現重複的程式碼</li>
+<li>減少團隊間的重工，避免浪費人力和時間成本</li>
+<li>各服務能保持對第三方套件的一致性，避免發生版本間的衝突</li>
+<li>當有 <code>Bug</code> 出現時，只需要修改共用函式庫；不需要手動改每一顆服務</li>
+</ul>
+<h3 id="缺點"><a href="#缺點" class="headerlink" title="缺點"></a>缺點</h3><ul>
+<li>過於依賴共用函式庫，會導致各服務之間的耦合度增加</li>
+<li>當共用函式庫更新時，所有服務可能都會需要同步調整版本和程式碼</li>
+</ul>
+<h2 id="設計共用函式庫的-Best-Practices"><a href="#設計共用函式庫的-Best-Practices" class="headerlink" title="設計共用函式庫的 Best Practices"></a>設計共用函式庫的 Best Practices</h2><p>在設計共用函式庫時，有一些 Best Practices 可以遵循:</p>
+<ul>
+<li>弄清楚共用函式庫的需求和功能，讓其符合單一責任的原則避免多餘的程式碼</li>
+<li>設計時要專注在功能上，但與服務的耦合度要低，這樣共用函式庫改動時就能減少對服務的影響</li>
+<li>在共用函式庫中多使用介面去增加配置的靈活性，一是方便函式庫的擴展，二是讓服務也能客製函式庫的功能</li>
+<li>共用函式庫要能讓團隊簡易使用和上手，減少學習的時間成本</li>
+<li>更新函式庫應考慮兼容性，避免服務因函式庫的影響而改動程式碼</li>
+</ul>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在微服務中設計共用函式庫，其主要目的就是為了讓各服務能更專注於自身的商業邏輯，<br>一是減少程式碼重複的現象，二是確保服務使用第三方套件一致性。<br>但在設計共用函式庫就必須考慮和服務的耦合度，將改動的影響最小化，<br>避免服務因為函式庫的更新而調整，反而增加團隊的時間成本和溝通成本。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1410,274 +1677,6 @@
 <li><a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">The Clean Architecture - Uncle Bob</a></li>
 <li><a target="_blank" rel="noopener" href="https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html">再談Clean Architecture三原則</a></li>
 <li><a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10222311">DDD 架構： 整合 Clean Architecture</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/service/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術札記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/01/05/angular/service/" class="post-title-link" itemprop="url">Angular Service</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2022-01-05 17:48:32" itemprop="dateCreated datePublished" datetime="2022-01-05T17:48:32+08:00">2022-01-05</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 10:37:11" itemprop="dateModified" datetime="2024-01-06T10:37:11+08:00">2024-01-06</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://i.imgur.com/K8xPWD7.png" alt="service"></p>
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>廣義的來說，服務可以是任何值、函式或是特性，<br>但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。<br>Angular將元件和服務區分開，<br>元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，<br>而像是向後端取得資料、檢核輸入或撰寫Log等等動作，<br>就會定義在服務裡面，再將服務注入到元件裡面使用。<br>如此一來，多個元件可以依賴同一個服務，<br>就能達到重複利用和模組化的效果，<br>另外也能讓元件輕量化，程式碼更整潔。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>依賴注入</li>
-<li>建立服務</li>
-<li>提供服務</li>
-</ul>
-<h2 id="依賴注入"><a href="#依賴注入" class="headerlink" title="依賴注入"></a>依賴注入</h2><p>Dependency Injection 是指依賴注入，簡稱就是 DI。<br>元件會根據需求，將所需要的服務注入到元件裡面，<br>而元件就能得到操控服務的權限。<br>以電商平台的例子來說，<br>產品元件和購物車元件，都會需要取得產品資訊，<br>這時候就能將取得產品資訊的邏輯定義在服務裡面。</p>
-<h2 id="建立服務"><a href="#建立服務" class="headerlink" title="建立服務"></a>建立服務</h2><p>在Angular中，如果要將一個類別定義為服務，需要用到 @Injectable 裝飾符，<br>以便讓Angular將它視為依賴並注入到元件裡面。</p>
-<ol>
-<li>注入器是主要的機制，Angular會在啟動專案時自動幫你建立，所以不需要自己建立注入器。</li>
-<li>注入器會建立管理依賴的容器，讓它們可以被重複利用。</li>
-<li>提供者會是一個物件，用來告訴注入器如何獲取或建立依賴。</li>
-</ol>
-<p>以官方的Hero Service為例，<br>有一個Hero元件，是用來顯示英雄清單的資料，<br>而資料則是透過Hero Service所取得。<br>因此在元件被實體化時，須將此依賴注入到元件裡面。</p>
-<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">DemoComponent</span> &#123;</span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params"><span class="keyword">private</span> heroService:HeroService</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>這時候注入器就會在容器尋找是否已存在Hero Service這一個依賴，<br>如果存在，則將此依賴開放給元件使用；<br>反之，就會在容器裡面新增依賴並開放給元件使用。</p>
-<p><img src="https://i.imgur.com/QHpW8UF.png" alt="DI"></p>
-<h2 id="提供服務"><a href="#提供服務" class="headerlink" title="提供服務"></a>提供服務</h2><p>你必須為服務註冊一個提供者(Provider)，這樣服務才能被使用。</p>
-<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Iejectable</span>(&#123;</span><br><span class="line">   <span class="attr">providedIn</span>:<span class="string">&#x27;root&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">HeroService</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>提供者可以被定義在服務的裝飾符裡面，<br>而 root 則表示此服務在整個專案裡面只會擁有一個，<br>每個元件透過注入來分享這一個服務。</p>
-<p>備註: 倘若使用 AngularCLI 建立服務，就會自動設定為 root。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ng generate service &lt;service-name&gt;</span><br></pre></td></tr></table></figure>
-
-<p>當然也可以將服務設定為特定模組所使用，</p>
-<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;</span><br><span class="line">  <span class="attr">providers</span>: [</span><br><span class="line">      <span class="title class_">HeroService</span>,</span><br><span class="line"> ],</span><br><span class="line"> ...</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-
-<p>表示這個服務會被模組內的元件所共享。<br>又或者是特定元件，</p>
-<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>:    <span class="string">&#x27;app-hero-list&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./hero-list.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">providers</span>:  [<span class="title class_">HeroService</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-
-<p>表示這個服務在該元件內所共享。<br>總結上述，服務的提供者可以為</p>
-<ul>
-<li>root - 根等級，表示整個專案</li>
-<li>ngModule - 模組等級，表示單一模組內</li>
-<li>Component - 元件等級，表示單一元件內</li>
-</ul>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://angular.io/guide/architecture-services">Angular service</a></li>
-<li><a target="_blank" rel="noopener" href="https://angular.io/guide/dependency-injection">Angular DI</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/pipe/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術札記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/01/05/angular/pipe/" class="post-title-link" itemprop="url">Angular Pipe</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2022-01-05 17:47:01" itemprop="dateCreated datePublished" datetime="2022-01-05T17:47:01+08:00">2022-01-05</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 10:37:07" itemprop="dateModified" datetime="2024-01-06T10:37:07+08:00">2024-01-06</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，<br>簡單來說，你可以將 pipe 視為一個function在Template裡面使用，<br>input  → pipe → output<br>舉例來說，<br>當日期的資料為 西元 2021&#x2F;05&#x2F;10，<br>就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>常用的 Pipe</li>
-<li>Pipe 使用方式</li>
-<li>自定義 Pipe</li>
-</ul>
-<h2 id="常用的-Pipe"><a href="#常用的-Pipe" class="headerlink" title="常用的 Pipe"></a>常用的 Pipe</h2><ul>
-<li><p>Date</p>
-<p>  將日期轉換為本地格式</p>
-</li>
-<li><p>Upper Case</p>
-<p>  英文字母轉換為大寫</p>
-</li>
-<li><p>Lower Case</p>
-<p>  英文字母轉換為小寫</p>
-</li>
-<li><p>Currency</p>
-<p>  將數字轉換為貨幣字串，格式也能在地化</p>
-</li>
-<li><p>Decimal</p>
-<p>  將數字轉換為有小數點的字串，格式也能在地化</p>
-</li>
-<li><p>Percent</p>
-<p>  將數字轉換為有百分比的字串，格式也能在地化</p>
-</li>
-</ul>
-<h2 id="Pipe-使用方式"><a href="#Pipe-使用方式" class="headerlink" title="Pipe 使用方式"></a>Pipe 使用方式</h2><p>如果要使用 Pipe ， 就必須在Template使用 pipe operator  ( | )</p>
-<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">today = <span class="keyword">new</span> <span class="title class_">Date</span>(<span class="number">2021</span>, <span class="number">0</span>, <span class="number">20</span>);</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Jan 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="加上參數"><a href="#加上參數" class="headerlink" title="加上參數"></a>加上參數</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 2021-01-20 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123; today | date:&#x27;yyyy-MM-dd&#x27; &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Chain-Pipe"><a href="#Chain-Pipe" class="headerlink" title="Chain-Pipe"></a>Chain-Pipe</h4><p>如果想要使用多個Pipe，就在Pipe串接其他Pipe。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- WEDNESDAY, JANUARY 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date:&#x27;fullDate&#x27; | uppercase &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
-
-<h2 id="自定義-Pipe"><a href="#自定義-Pipe" class="headerlink" title="自定義 Pipe"></a>自定義 Pipe</h2><p>在某些時候，部分資料的轉換並沒有built-in Pipe可以使用，<br>那我們就可以透過客製化的Pipe來轉換資料，<br>而客製化Pipe在Template的使用方式也會如同built-in Pipe一樣。<br>舉例來說，當我取得學生的數學成績資料，發現成績都不甚理想，<br>故此想在畫面上多顯示加乘過後的成績。</p>
-<ul>
-<li><p>建立 Class</p>
-  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pipe的名稱必須為駝峰式命名，不能有底線</span></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Implements Pipe Transform 介面</p>
-  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>, <span class="title class_">PipeTransform</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> <span class="keyword">implements</span> <span class="title class_">PipeTransform</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">transform</span>(<span class="params">value: <span class="built_in">number</span>, multiplyParam: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">      <span class="comment">// value為分數，multiplyParam為加乘參數</span></span><br><span class="line">      <span class="keyword">return</span> value * multiplyParam;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>如果為手動建立需在ngModule宣告Pipe，避免發生找不到類別的錯誤</p>
-  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;  </span><br><span class="line">  <span class="attr">declarations</span>: [<span class="title class_">MultiplyScorePipe</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>在Template裡面使用 Pipe 來轉換資料</p>
-  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Component</span>, <span class="title class_">OnInit</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;my-app&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./app.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">styleUrls</span>: [<span class="string">&#x27;./app.component.css&#x27;</span>]</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppComponent</span> <span class="keyword">implements</span> <span class="title class_">OnInit</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="attr">students</span>: &#123; <span class="attr">name</span>: <span class="built_in">string</span>; <span class="attr">mathScore</span>: <span class="built_in">number</span> &#125;[];</span><br><span class="line"></span><br><span class="line">  <span class="title function_">ngOnInit</span>(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">students</span> = [</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Bill&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">45</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;John&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">32</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Neil&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">15</span> &#125;</span><br><span class="line">    ];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;table&gt;</span><br><span class="line">  &lt;thead&gt;</span><br><span class="line">    &lt;tr&gt;</span><br><span class="line">      &lt;th&gt;學生名稱&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學原始成績&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學加乘成績&lt;/th&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/thead&gt;</span><br><span class="line">  &lt;tbody&gt;</span><br><span class="line">    &lt;tr *ngFor=&quot;let student of students&quot;&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.name &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore | multiplyScore:3.2 &#125;&#125;&lt;/td&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/tbody&gt;</span><br><span class="line">&lt;/table&gt;</span><br></pre></td></tr></table></figure>
-
-<p> <img src="https://i.imgur.com/X26NP0q.png" alt="demo"></p>
-</li>
-</ul>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://angular.io/guide/pipes">pipes</a></li>
 </ul>
 
       

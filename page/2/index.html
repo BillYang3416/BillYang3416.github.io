@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">9</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -168,6 +168,274 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/service/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/01/05/angular/service/" class="post-title-link" itemprop="url">Angular Service</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-01-05 17:48:32" itemprop="dateCreated datePublished" datetime="2022-01-05T17:48:32+08:00">2022-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:37:11" itemprop="dateModified" datetime="2024-01-06T10:37:11+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://i.imgur.com/K8xPWD7.png" alt="service"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>廣義的來說，服務可以是任何值、函式或是特性，<br>但通常來說，服務會定義成類別 ( class )，用來處理特定的事情和邏輯。<br>Angular將元件和服務區分開，<br>元件定義為處理畫面操作的角色，像是屬性綁定、事件綁定等等，<br>而像是向後端取得資料、檢核輸入或撰寫Log等等動作，<br>就會定義在服務裡面，再將服務注入到元件裡面使用。<br>如此一來，多個元件可以依賴同一個服務，<br>就能達到重複利用和模組化的效果，<br>另外也能讓元件輕量化，程式碼更整潔。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>依賴注入</li>
+<li>建立服務</li>
+<li>提供服務</li>
+</ul>
+<h2 id="依賴注入"><a href="#依賴注入" class="headerlink" title="依賴注入"></a>依賴注入</h2><p>Dependency Injection 是指依賴注入，簡稱就是 DI。<br>元件會根據需求，將所需要的服務注入到元件裡面，<br>而元件就能得到操控服務的權限。<br>以電商平台的例子來說，<br>產品元件和購物車元件，都會需要取得產品資訊，<br>這時候就能將取得產品資訊的邏輯定義在服務裡面。</p>
+<h2 id="建立服務"><a href="#建立服務" class="headerlink" title="建立服務"></a>建立服務</h2><p>在Angular中，如果要將一個類別定義為服務，需要用到 @Injectable 裝飾符，<br>以便讓Angular將它視為依賴並注入到元件裡面。</p>
+<ol>
+<li>注入器是主要的機制，Angular會在啟動專案時自動幫你建立，所以不需要自己建立注入器。</li>
+<li>注入器會建立管理依賴的容器，讓它們可以被重複利用。</li>
+<li>提供者會是一個物件，用來告訴注入器如何獲取或建立依賴。</li>
+</ol>
+<p>以官方的Hero Service為例，<br>有一個Hero元件，是用來顯示英雄清單的資料，<br>而資料則是透過Hero Service所取得。<br>因此在元件被實體化時，須將此依賴注入到元件裡面。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">DemoComponent</span> &#123;</span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params"><span class="keyword">private</span> heroService:HeroService</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>這時候注入器就會在容器尋找是否已存在Hero Service這一個依賴，<br>如果存在，則將此依賴開放給元件使用；<br>反之，就會在容器裡面新增依賴並開放給元件使用。</p>
+<p><img src="https://i.imgur.com/QHpW8UF.png" alt="DI"></p>
+<h2 id="提供服務"><a href="#提供服務" class="headerlink" title="提供服務"></a>提供服務</h2><p>你必須為服務註冊一個提供者(Provider)，這樣服務才能被使用。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Iejectable</span>(&#123;</span><br><span class="line">   <span class="attr">providedIn</span>:<span class="string">&#x27;root&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">HeroService</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>提供者可以被定義在服務的裝飾符裡面，<br>而 root 則表示此服務在整個專案裡面只會擁有一個，<br>每個元件透過注入來分享這一個服務。</p>
+<p>備註: 倘若使用 AngularCLI 建立服務，就會自動設定為 root。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ng generate service &lt;service-name&gt;</span><br></pre></td></tr></table></figure>
+
+<p>當然也可以將服務設定為特定模組所使用，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;</span><br><span class="line">  <span class="attr">providers</span>: [</span><br><span class="line">      <span class="title class_">HeroService</span>,</span><br><span class="line"> ],</span><br><span class="line"> ...</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務會被模組內的元件所共享。<br>又或者是特定元件，</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>:    <span class="string">&#x27;app-hero-list&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./hero-list.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">providers</span>:  [<span class="title class_">HeroService</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>表示這個服務在該元件內所共享。<br>總結上述，服務的提供者可以為</p>
+<ul>
+<li>root - 根等級，表示整個專案</li>
+<li>ngModule - 模組等級，表示單一模組內</li>
+<li>Component - 元件等級，表示單一元件內</li>
+</ul>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/architecture-services">Angular service</a></li>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/dependency-injection">Angular DI</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2022/01/05/angular/pipe/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/01/05/angular/pipe/" class="post-title-link" itemprop="url">Angular Pipe</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2022-01-05 17:47:01" itemprop="dateCreated datePublished" datetime="2022-01-05T17:47:01+08:00">2022-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-06 10:37:07" itemprop="dateModified" datetime="2024-01-06T10:37:07+08:00">2024-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Angular/" itemprop="url" rel="index"><span itemprop="name">Angular</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我們可以使用 Pipe 來轉換字串、貨幣、日期或其他資料的顯示，<br>簡單來說，你可以將 pipe 視為一個function在Template裡面使用，<br>input  → pipe → output<br>舉例來說，<br>當日期的資料為 西元 2021&#x2F;05&#x2F;10，<br>就可以透過 pipe 轉換為 民國 110&#x2F;05&#x2F;10。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>常用的 Pipe</li>
+<li>Pipe 使用方式</li>
+<li>自定義 Pipe</li>
+</ul>
+<h2 id="常用的-Pipe"><a href="#常用的-Pipe" class="headerlink" title="常用的 Pipe"></a>常用的 Pipe</h2><ul>
+<li><p>Date</p>
+<p>  將日期轉換為本地格式</p>
+</li>
+<li><p>Upper Case</p>
+<p>  英文字母轉換為大寫</p>
+</li>
+<li><p>Lower Case</p>
+<p>  英文字母轉換為小寫</p>
+</li>
+<li><p>Currency</p>
+<p>  將數字轉換為貨幣字串，格式也能在地化</p>
+</li>
+<li><p>Decimal</p>
+<p>  將數字轉換為有小數點的字串，格式也能在地化</p>
+</li>
+<li><p>Percent</p>
+<p>  將數字轉換為有百分比的字串，格式也能在地化</p>
+</li>
+</ul>
+<h2 id="Pipe-使用方式"><a href="#Pipe-使用方式" class="headerlink" title="Pipe 使用方式"></a>Pipe 使用方式</h2><p>如果要使用 Pipe ， 就必須在Template使用 pipe operator  ( | )</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">today = <span class="keyword">new</span> <span class="title class_">Date</span>(<span class="number">2021</span>, <span class="number">0</span>, <span class="number">20</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- Jan 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="加上參數"><a href="#加上參數" class="headerlink" title="加上參數"></a>加上參數</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 2021-01-20 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123; today | date:&#x27;yyyy-MM-dd&#x27; &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Chain-Pipe"><a href="#Chain-Pipe" class="headerlink" title="Chain-Pipe"></a>Chain-Pipe</h4><p>如果想要使用多個Pipe，就在Pipe串接其他Pipe。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- WEDNESDAY, JANUARY 20, 2021 --&gt;</span><br><span class="line">&lt;p&gt;&#123;&#123;today | date:&#x27;fullDate&#x27; | uppercase &#125;&#125;&lt;/p&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="自定義-Pipe"><a href="#自定義-Pipe" class="headerlink" title="自定義 Pipe"></a>自定義 Pipe</h2><p>在某些時候，部分資料的轉換並沒有built-in Pipe可以使用，<br>那我們就可以透過客製化的Pipe來轉換資料，<br>而客製化Pipe在Template的使用方式也會如同built-in Pipe一樣。<br>舉例來說，當我取得學生的數學成績資料，發現成績都不甚理想，<br>故此想在畫面上多顯示加乘過後的成績。</p>
+<ul>
+<li><p>建立 Class</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pipe的名稱必須為駝峰式命名，不能有底線</span></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Implements Pipe Transform 介面</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;<span class="title class_">Pipe</span>, <span class="title class_">PipeTransform</span>&#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Pipe</span>(&#123;<span class="attr">name</span>:<span class="string">&#x27;multiplyScore&#x27;</span>&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">MultiplyScorePipe</span> <span class="keyword">implements</span> <span class="title class_">PipeTransform</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">transform</span>(<span class="params">value: <span class="built_in">number</span>, multiplyParam: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">      <span class="comment">// value為分數，multiplyParam為加乘參數</span></span><br><span class="line">      <span class="keyword">return</span> value * multiplyParam;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果為手動建立需在ngModule宣告Pipe，避免發生找不到類別的錯誤</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@NgModule</span>(&#123;  </span><br><span class="line">  <span class="attr">declarations</span>: [<span class="title class_">MultiplyScorePipe</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在Template裡面使用 Pipe 來轉換資料</p>
+  <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; <span class="title class_">Component</span>, <span class="title class_">OnInit</span> &#125; <span class="keyword">from</span> <span class="string">&#x27;@angular/core&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span>(&#123;</span><br><span class="line">  <span class="attr">selector</span>: <span class="string">&#x27;my-app&#x27;</span>,</span><br><span class="line">  <span class="attr">templateUrl</span>: <span class="string">&#x27;./app.component.html&#x27;</span>,</span><br><span class="line">  <span class="attr">styleUrls</span>: [<span class="string">&#x27;./app.component.css&#x27;</span>]</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">AppComponent</span> <span class="keyword">implements</span> <span class="title class_">OnInit</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="attr">students</span>: &#123; <span class="attr">name</span>: <span class="built_in">string</span>; <span class="attr">mathScore</span>: <span class="built_in">number</span> &#125;[];</span><br><span class="line"></span><br><span class="line">  <span class="title function_">ngOnInit</span>(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">students</span> = [</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Bill&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">45</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;John&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">32</span> &#125;,</span><br><span class="line">      &#123; <span class="attr">name</span>: <span class="string">&#x27;Neil&#x27;</span>, <span class="attr">mathScore</span>: <span class="number">15</span> &#125;</span><br><span class="line">    ];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;table&gt;</span><br><span class="line">  &lt;thead&gt;</span><br><span class="line">    &lt;tr&gt;</span><br><span class="line">      &lt;th&gt;學生名稱&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學原始成績&lt;/th&gt;</span><br><span class="line">      &lt;th&gt;數學加乘成績&lt;/th&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/thead&gt;</span><br><span class="line">  &lt;tbody&gt;</span><br><span class="line">    &lt;tr *ngFor=&quot;let student of students&quot;&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.name &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore &#125;&#125;&lt;/td&gt;</span><br><span class="line">      &lt;td&gt;&#123;&#123; student.mathScore | multiplyScore:3.2 &#125;&#125;&lt;/td&gt;</span><br><span class="line">    &lt;/tr&gt;</span><br><span class="line">  &lt;/tbody&gt;</span><br><span class="line">&lt;/table&gt;</span><br></pre></td></tr></table></figure>
+
+<p> <img src="https://i.imgur.com/X26NP0q.png" alt="demo"></p>
+</li>
+</ul>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://angular.io/guide/pipes">pipes</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
