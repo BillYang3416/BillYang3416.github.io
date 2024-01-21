@@ -128,18 +128,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-count">16</span>
           <span class="site-state-item-name">文章</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分類</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">標籤</span></a>
       </div>
   </nav>
@@ -168,6 +168,190 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2024/01/17/golang/pgx/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Bill Yang">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="B1LLGOAT">
+      <meta itemprop="description" content="技術札記">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | B1LLGOAT">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2024/01/17/golang/pgx/" class="post-title-link" itemprop="url">在 Golang 操作 PostgresSQL</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">發表於</span>
+
+      <time title="創建時間：2024-01-17 21:41:07" itemprop="dateCreated datePublished" datetime="2024-01-17T21:41:07+08:00">2024-01-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-01-21 17:04:30" itemprop="dateModified" datetime="2024-01-21T17:04:30+08:00">2024-01-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分類於</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Postgres/" itemprop="url" rel="index"><span itemprop="name">Postgres</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，<br>首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，<br>接著就會針對 pgx 這個套件作更進一步的說明和介紹，<br>那因爲 pgx 是使用原生SQL去操作 PostgresSQL，<br>所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。</p>
+<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
+<li>套件的選擇</li>
+<li>如何使用 pgx</li>
+<li>使用 squirrel 組出 SQL Query</li>
+</ul>
+<h2 id="套件的選擇"><a href="#套件的選擇" class="headerlink" title="套件的選擇"></a>套件的選擇</h2><p>當我們要在 Golang 中連接 PostgresSQL 時，<br>有幾種套件可以挑選，那我們先將這些套件分成兩類在一一說明，<br>第一個是 Drivers，當我們要對資料庫做新刪查改時都是使用基本的 SQL 語句，也就是 <code>Plain SQL</code>。<br>另一個就是 ORM (Object-Relational-Mapping)，<br>在物件導向的語言中，通常都會有 ORM 的套件來將物件轉換成資料庫的資料，<br>這中間不需要開發者組出SQL語句，而是透過套件來組成，像是 JAVA 中的 Hibernate。<br>而 Golang 雖然並非純物件導向的語言，但一樣也有第三方套件提供了這種作法。</p>
+<h3 id="Drivers-Plain-SQL"><a href="#Drivers-Plain-SQL" class="headerlink" title="Drivers (Plain SQL)"></a>Drivers (Plain SQL)</h3><h4 id="pq"><a href="#pq" class="headerlink" title="pq"></a>pq</h4><blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/lib/pq">lib&#x2F;pq</a></p>
+</blockquote>
+<p>pq 是連接 PostgresSQL 的 driver 之一，<br>通常會與標準函式庫的 <code>database/sql</code> 搭配使用。<br>優點就是簡單上手且可隨時切換成不同的資料庫，不會被 PostgresSQL 所綁住，<br>但缺點就是效能頗差。<br>另外值得一提的是該套件的開發者已經宣告停止出新的功能，<br>目前處於 <code>maintain</code> 的狀態，而開發者則推薦使用 pgx 作為連接 PostgresSQL 的 driver </p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;database/sql&quot;</span></span><br><span class="line"></span><br><span class="line">	_ <span class="string">&quot;github.com/lib/pq&quot;</span> <span class="comment">// implicitly import</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	connStr := <span class="string">&quot;user=pqgotest dbname=pqgotest sslmode=verify-full&quot;</span></span><br><span class="line">	db, err := sql.Open(<span class="string">&quot;postgres&quot;</span>, connStr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatal(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	age := <span class="number">21</span></span><br><span class="line">	rows, err := db.Query(<span class="string">&quot;SELECT name FROM users WHERE age = $1&quot;</span>, age)</span><br><span class="line">	…</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>程式碼取自 <a target="_blank" rel="noopener" href="https://pkg.go.dev/github.com/lib/pq">go pkg</a></p>
+</blockquote>
+<h4 id="pgx"><a href="#pgx" class="headerlink" title="pgx"></a>pgx</h4><blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/jackc/pgx">jackc&#x2F;pgx</a></p>
+</blockquote>
+<p>如果要在 Golang 中操作 PostgresSQL，可以說 pgx 應該是目前最多人推薦的選擇，<br>他有幾個優勢，首先要說的就是效能，他的效能比 pq 或者是 Gorm 都還要好，<br>並且他也有支援 <code>database/sql</code> 的用法，<br>也就是說我們也可以像前面 pq 的程式碼一樣去使用 <code>database/sql</code> 去下語法，<br>但實際與 PostgresSQL 對接的還是 pgx。<br>再來，最重要的是 pgx 他還支援一些 PostgresSQL 特性的實現，<br>而這一些都是 pq 和 database&#x2F;sql 沒辦法滿足的需求。<br>但缺點就是當要切換不同的資料庫時，會比較難改動，<br>再來就是 pgx 相對 pq 複雜，需要多一點時間學習。<br>在後續的文章中，我會在介紹關於 pgx 的一些使用方法。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	_ <span class="string">&quot;github.com/jackc/pgx/v4/stdlib&quot;</span> <span class="comment">// implicitly import</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h3 id="ORM-Object-Relational-Mapping"><a href="#ORM-Object-Relational-Mapping" class="headerlink" title="ORM (Object-Relational-Mapping)"></a>ORM (Object-Relational-Mapping)</h3><h4 id="GORM"><a href="#GORM" class="headerlink" title="GORM"></a>GORM</h4><p>雖然 Golang 並非純物件導向的語言，但因爲有 struct、method 和 interface，<br>所以我們可以使用 struct 來對應 database 中的 table。<br>而 GORM 就是提供了這樣的方法來實現 ORM，並且他還能自動建立新的 schema 和 table，<br>也能改變舊有 table 的結構。<br>此外對於資料庫的新刪查改也是能非常簡單地去實現。<br>因此可以說他的優點就是開發上相對簡單，並且不受限於不同資料庫的限制，可以隨時無痛轉換，<br>而他的缺點大概有兩個，其一是效能，因為我們是透過套件去產出SQL語句，<br>相對效能一定會比直接下原生SQL來得差，<br>其二就是無法寫出複雜的 Queries，碰到這類情況時，可能還是需要使用原生的SQL來解決。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Product <span class="keyword">struct</span> &#123;</span><br><span class="line">  gorm.Model</span><br><span class="line">  Code  <span class="type">string</span></span><br><span class="line">  Price <span class="type">uint</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  db, err := gorm.Open(sqlite.Open(<span class="string">&quot;test.db&quot;</span>), &amp;gorm.Config&#123;&#125;)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="built_in">panic</span>(<span class="string">&quot;failed to connect database&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Migrate the schema</span></span><br><span class="line">  db.AutoMigrate(&amp;Product&#123;&#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Create</span></span><br><span class="line">  db.Create(&amp;Product&#123;Code: <span class="string">&quot;D42&quot;</span>, Price: <span class="number">100</span>&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>程式碼取自 <a target="_blank" rel="noopener" href="https://gorm.io/docs/">GORM Guides</a></p>
+</blockquote>
+<h4 id="選擇的建議"><a href="#選擇的建議" class="headerlink" title="選擇的建議"></a>選擇的建議</h4><p>那在介紹完上述的套件之後，<br>我認為沒有哪個套件一定是最好，<br>假設今天你的系統只會有簡單的CRUD並且也不追求效能的話，<br>那其實就可以選擇使用 GORM 來減少寫原生SQL的時間，同時也能降低開發者的學習成本。<br>但如果另一個系統非常追求效能並且有很多複雜的 Queries 時，<br>就應該改使用 pgx 寫原生SQL，相對的時間成本也會提高，<br>所以依據系統的需求和情境來選擇套件才會是最佳解。</p>
+<h2 id="如何使用-pgx"><a href="#如何使用-pgx" class="headerlink" title="如何使用 pgx"></a>如何使用 pgx</h2><p>接下來我們來了解如何使用 pgx：</p>
+<h3 id="建立專案"><a href="#建立專案" class="headerlink" title="建立專案"></a>建立專案</h3><p>在使用之前，我們先使用兩個指令來建立專案和載入套件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go mod init &lt;project-name&gt;</span><br><span class="line">go get github.com/jackc/pgx/v5</span><br></pre></td></tr></table></figure>
+
+<h3 id="連接-PostgresSQL"><a href="#連接-PostgresSQL" class="headerlink" title="連接 PostgresSQL"></a>連接 PostgresSQL</h3><p>使用 pgx 連接 PostgresSQL 的方式可以分為兩種，<br>第一種就是使用 <code>pgx.Connect</code>，這種方式只會與資料庫建立一條連線，<br>適合用於簡單的專案，像是 script 或範例。<br>但如果專案是 web service 的性質，那就非常的不適合，<br>因為同一時間可能會有多個使用者發請求到後端，<br>而後端同時有多個 <code>Concurrent</code> 的請求要對資料庫做異動時，就會被卡住。<br>因此通常 web service 都會推薦使用第二種方式，也就是 <code>pgxpool</code>，<br>這個方式會建立多條和資料庫的連線，藉此來滿足多個請求對資料庫的操作。</p>
+<blockquote>
+<p>想多了解 Connection Pooling 可以參考 <a target="_blank" rel="noopener" href="https://stackoverflow.com/a/4041136">What is database pooling?</a></p>
+</blockquote>
+<h4 id="pgx-Connect"><a href="#pgx-Connect" class="headerlink" title="pgx.Connect"></a>pgx.Connect</h4><p>下面程式碼是我們在使用 pgx.Connect 的範例，<br>有幾個地方可以來說明一下，</p>
+<ul>
+<li><p>contexnt.Background()</p>
+<p>context 是標準函式庫之一，主要是用來對執行的進程做取消或是加上timeout，這邊可以舉一個 request 的例子，<br>假設前端向後端發出了請求，那這個請求就會產生 request-scoped 的 context，<br>假設今天前端突然取消了請求，就可以透過這個 context 去結束對資料庫的操作</p>
+</li>
+<li><p>os.Getenv(“DATABASE_URL”)</p>
+<p>這個是指從環境變數取得資料庫的連線資訊，URL 的形式如同 <code>postgres://username:password@host:port/dbname</code></p>
+</li>
+<li><p>defer conn.Close(…)</p>
+<p>每當我們向資料庫建立連線時都需要記得關閉，這和開檔和關檔的道理是一樣的，避免資源的耗用。<br>至於 defer 則代表當 main function return 後才會執行，因為程式對資料庫的操作已經結束了，不需要再保持連線。<br>如果沒有加上 defer 就會導致連線建立後就馬上關閉</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	conn, err := pgx.Connect(context.Background(), os.Getenv(<span class="string">&quot;DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">defer</span> conn.Close(context.Background())</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="pgxpool"><a href="#pgxpool" class="headerlink" title="pgxpool"></a>pgxpool</h4><p>而 pgxpool 建立 pool 的方式可以分為兩種，<br>第一種就是使用 <code>pgxpool.New</code>，用法和 <code>pgx.Connect</code> 類似。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/jackc/pgx/v5/pgxpool&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	dbpool, err := pgxpool.New(context.Background(), os.Getenv(<span class="string">&quot;LOCAL_DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> dbpool.Close()</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而另一種就是使用 <code>pgxpool.NewWithConfig</code>，<br>這個用法的優勢就在於彈性，<br>當你今天想要在程式決定最大或最小的連線數又或者是在連線的建立前後去做一些事情都可以透過 config 去設定。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	config, err := pgxpool.ParseConfig(os.Getenv(<span class="string">&quot;DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to parase config : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	config.MaxConns = <span class="number">10</span> <span class="comment">// 最大的連線數</span></span><br><span class="line">	config.AfterConnect = <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, conn *pgx.Conn)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">		<span class="comment">// 在連線建立後，額外做一些事情</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	pool, err := pgxpool.NewWithConfig(context.Background(), config)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">defer</span> pool.Close()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="執行-SQL-Queries"><a href="#執行-SQL-Queries" class="headerlink" title="執行 SQL Queries"></a>執行 SQL Queries</h3><p>接下來我們來了解如何使用 pgx 來執行 SQL Queries，<br>這邊我們準備了銀行帳戶的 table 來作為示範用。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> IF <span class="keyword">NOT</span> <span class="keyword">EXISTS</span> bank_accounts (</span><br><span class="line">    account_number <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">    account_holder_name <span class="type">VARCHAR</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    balance <span class="type">DECIMAL</span>(<span class="number">12</span>, <span class="number">2</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    account_type <span class="type">VARCHAR</span>(<span class="number">50</span>),</span><br><span class="line">    opened_date <span class="type">DATE</span>,</span><br><span class="line">    is_active <span class="type">BOOLEAN</span> <span class="keyword">DEFAULT</span> <span class="literal">TRUE</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> bank_accounts (account_number, account_holder_name, balance, account_type, opened_date, is_active)</span><br><span class="line"><span class="keyword">VALUES</span></span><br><span class="line">    (<span class="string">&#x27;1234567890&#x27;</span>, <span class="string">&#x27;王大名&#x27;</span>, <span class="number">5000.00</span>, <span class="string">&#x27;儲蓄&#x27;</span>, <span class="string">&#x27;2022-01-15&#x27;</span>, <span class="literal">TRUE</span>),</span><br><span class="line">    (<span class="string">&#x27;9876543210&#x27;</span>, <span class="string">&#x27;陳康&#x27;</span>, <span class="number">7500.50</span>, <span class="string">&#x27;支票&#x27;</span>, <span class="string">&#x27;2022-02-10&#x27;</span>, <span class="literal">TRUE</span>),</span><br><span class="line">    (<span class="string">&#x27;4444555566&#x27;</span>, <span class="string">&#x27;楊小胖&#x27;</span>, <span class="number">12000.25</span>, <span class="string">&#x27;儲蓄&#x27;</span>, <span class="string">&#x27;2022-04-20&#x27;</span>, <span class="literal">TRUE</span>);</span><br></pre></td></tr></table></figure>
+
+<h4 id="QueryRow"><a href="#QueryRow" class="headerlink" title="QueryRow"></a>QueryRow</h4><p>當我們想要透過唯一識別符像是 PK 來查出一筆資料時，<br>就可以使用 <code>pgxpool.QueryRow()</code> 搭配 Scan 取出資料，<br>下面程式碼就是使用 <code>QueryRow</code> 來取得帳戶為 <code>1234567890</code> 的資料。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">  accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line">	<span class="keyword">var</span> b bankAccount</span><br><span class="line">	err := pool.QueryRow(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;SELECT account_holder_name, balance, account_type, opened_date, is_active FROM bank_accounts WHERE account_number = $1&quot;</span>,</span><br><span class="line">		accountNumber).Scan(b)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(b)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通常 <code>QueryRow</code> 都是搭配 Select 使用，但在某些情況下，<br>我們可能會需要在 Insert 後取得資料的 PK，就可以使用 <code>QueryRow</code> 來取得 Return Clause 的資料。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> returnedAccountNumber <span class="type">string</span></span><br><span class="line">	err := pool.QueryRow(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;INSERT INTO bank_accounts (account_number,account_holder_name, balance, account_type, opened_date, is_active) VALUES  ($1,$2,$3,$4,$5,$6) RETURNING account_number&quot;</span>,</span><br><span class="line">		accountNumber, accountHolderName, balance, accountType, openedDate, isActive)</span><br><span class="line">    .Scan(&amp;returnedAccountNumber)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;Inserted Account Number&quot;</span>, returnedAccountNumber)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Exec"><a href="#Exec" class="headerlink" title="Exec"></a>Exec</h4><p>至於 Exec 則通常用於 Insert、Update 和 Delete 比較多，<br>因為這些 Queries 不像 Select 是要把資料查回來，<br>對於資料的新刪改，我們通常不需要再回傳資料。<br>下面程式碼就是使用 <code>Exec</code> 更新 <code>1234567890</code> 帳戶的餘額。<br>另外 <code>Exec</code> 回傳的 commandTag 則是可以幫助我們判斷這次所執行的資料異動是否有成功。 </p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	balance := <span class="number">200</span></span><br><span class="line">	accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line"></span><br><span class="line">	commandTag, err := pool.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		balance, accountNumber,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to update data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> commandTag.RowsAffected() == <span class="number">0</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;No rows updated&quot;</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;%d row(s) updated.\n&quot;</span>, commandTag.RowsAffected())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Query"><a href="#Query" class="headerlink" title="Query"></a>Query</h4><p>那前面我們提到了可以使用 <code>QueryRow</code> 透過唯一識別符來取得單筆資料，<br>但在 Select 的情境中，通常我們都會需要根據範圍或條件來查詢多筆資料，<br>因此就可以使用 <code>Query</code> 搭配 <code>CollectRows</code> 或 <code>ForEachRow</code> 來取得多筆資料的結果。<br>接下來我們使用查詢多筆帳戶的案例來示範這些用法。</p>
+<p>首先我們先來看 <code>CollectRows</code>，<br>當我們要將資料庫的資料轉換成 slice 時，<br>就可以使用 <code>CollectRows</code> 搭配 <code>RowTo</code>。<br>另外可以看到在使用 <code>Query</code> 時需要加上 <code>rows.Close()</code>，<br>代表在讀取完多筆資料後，我們要將連線資源釋放出去。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	rows, err := pool.Query(</span><br><span class="line">		context.Background(), </span><br><span class="line">		<span class="string">&quot;SELECT account_number FROM bank_accounts&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unabled to execute query:&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> rows.Close() <span class="comment">// </span></span><br><span class="line"></span><br><span class="line">	accountNumbers,err := pgx.CollectRows(rows, pgx.RowTo[<span class="type">string</span>])</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Error collecting rows:&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>另外也可以透過 <code>ForEachRow</code> 來自定義 callback func，<br>藉此在讀取多筆資料時，可以增加一些條件判斷或計算額外資訊。<br>像下面的程式碼就是要加總出所有帳戶的餘額。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> balance <span class="type">float64</span></span><br><span class="line">	<span class="keyword">var</span> totalBalance <span class="type">float64</span></span><br><span class="line"></span><br><span class="line">	rows, _ := pool.Query(context.Background(), <span class="string">&quot;SELECT balance FROM bank_accounts&quot;</span>)</span><br><span class="line"></span><br><span class="line">	_, err := pgx.ForEachRow(rows, []any&#123;&amp;balance&#125;, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">		totalBalance += balance</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Error iterating rows:&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;Total Balance: &quot;</span>, totalBalance)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Tx"><a href="#Tx" class="headerlink" title="Tx"></a>Tx</h4><p>上述提到的 <code>QueryRow</code>、<code>Exec</code> 和 <code>Qeury</code> 只針對單一的 SQL Query，<br>那如果我們有多個 SQL Queries 的情況下，也就是 transaction，<br>就可以使用 <code>tx</code> 來確保 ACID。<br>舉例來說，如果今天有帳戶A需要轉帳給帳戶B時，這代表我們需要執行兩個 SQL Queries，<br>在這種情況下兩個 SQL Queries 必須要全部成功或全部失敗，也就是確保 Atomicity。<br>如果沒有將這些 SQL Queries 組成為一個 transaction，<br>就有可能發生帳戶A餘額被扣除，但帳戶B餘額沒有被增加的情況。</p>
+<blockquote>
+<p>想多了解 transaction 和 ACID 可以參考 <a href="https://billyang3416.github.io/2024/01/08/database/acid/">淺談關聯資料庫的 ACID</a></p>
+</blockquote>
+<p>下圖的程式碼是使用轉帳的案例來示範，<br>可以看到我們會需要先使用 <code>Begin</code>，這代表我們啟動了一個 transaction，<br>再來就是使用 <code>Rollback</code> 確保當有錯誤發生時，已經成功的 SQL Queries 也必須 rollback，<br>至於其中 SQL Queries 則透過 <code>Exec</code> 來執行，<br>最後要執行的就是 <code>Commit</code> 代表生效所有的資料異動。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	tx, err := pool.Begin(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to start transaction: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> tx.Rollback(context.Background()) <span class="comment">// 只要有錯誤發生時，前面執行成功的 SQL Queries就要 rollback</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 帳戶1扣除餘額</span></span><br><span class="line">	_, err := tx.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = balance - $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		<span class="number">100</span>, <span class="string">&quot;1234567890&quot;</span>,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to update data: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 帳戶2增加餘額</span></span><br><span class="line">	_, err = tx.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = balance + $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		<span class="number">100</span>, <span class="string">&quot;9876543210&quot;</span>,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to update data: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err = tx.Commit(context.Background()); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to commit transaction: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>另外如果我們需要改變 transaction 的行為，<br>像是設定不同的 Isolation Level 就可以使用 <code>BeignTx</code>。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	tx, err := pool.BeginTx(context.Background(), pgx.TxOptions&#123;IsoLevel: pgx.Serializable&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用-squirrel-組出-SQL-Query"><a href="#使用-squirrel-組出-SQL-Query" class="headerlink" title="使用 squirrel 組出 SQL Query"></a>使用 squirrel 組出 SQL Query</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/Masterminds/squirrel">Masterminds&#x2F;squirrel</a></p>
+</blockquote>
+<p>在先前的程式碼中，可以看到我們都需要寫出一個長長的 SQL Query，<br>這種方法有兩個缺點，其一是寫起來比較麻煩，其二就是不容易閱讀，<br>因此我們可以透過 squirrel 這個套件來幫我們組出 SQL Query。</p>
+<p>這邊我們拿先前的程式碼來做改寫，可以看到我們都使用方法來代表 SQL Query 中的關鍵字，<br>像是 Select、From、Where，接著再搭配參數來組合成 SQL Query，<br>如此一來，不僅撰寫上變得簡單，並且程式碼的可讀性也增加了。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line"></span><br><span class="line">	query, args, err := squirrel</span><br><span class="line">		.Select(<span class="string">&quot;account_holder_name&quot;</span>, <span class="string">&quot;balance&quot;</span>, <span class="string">&quot;account_type&quot;</span>, <span class="string">&quot;opened_date&quot;</span>, <span class="string">&quot;is_active&quot;</span>)</span><br><span class="line">		.From(<span class="string">&quot;bank_accounts&quot;</span>)</span><br><span class="line">		.Where(squirrel.Eq&#123;<span class="string">&quot;accoount_number&quot;</span> : accountNumber&#125;)</span><br><span class="line">		.ToSql()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> b bankAccount</span><br><span class="line">	err := pool.QueryRow(context.Background(), query, args).Scan(b)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>一開始我們先分析了使用原生SQL或ORM的優缺點，<br>並且建議依據系統和場景來做出選擇。<br>接著在說明 pgx 的使用方式，像是 <code>QueryRow</code>、<code>Exec</code> 和 <code>Query</code>，<br>這三個都各自有不同的使用場景，並且也說明 transaction 的相關用法。<br>最後則是介紹 squirrel，這個套件能幫助我們在撰寫原生SQL上更加簡單及順手，並且也增加程式碼的可讀性。</p>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://preslav.me/2022/05/13/pq-or-pgx-choosing-the-right-postgresql-golang-driver/">pq or pgx - Which Driver Should I Go With?</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/hyperskill/using-gorm-versus-plain-sql-to-interact-with-databases-in-go-39728974edc8">Using GORM Versus Plain SQL to Interact with Databases in Go</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1531,153 +1715,6 @@
 <img src="/2023/12/16/golang/pointers/heap-stack.png" class="" title="This is an heap and stack image">
 
 <h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>總結一下這篇文章的重點，我們了解到如何在 Golang 中使用 <code>&amp;</code>     或 <code>*</code> 來處理指標，也理解值語義和指標語義的差別之處。<br>善用指標能讓我們在使用 Golang 開發系統時更加得心應手，也能快速找到 Bug 和理解資料的流向。</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://billyang3416.github.io/project/2023/12/12/golang/clean-architecture/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Bill Yang">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="B1LLGOAT">
-      <meta itemprop="description" content="技術札記">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | B1LLGOAT">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/12/12/golang/clean-architecture/" class="post-title-link" itemprop="url">Clean Architecture 簡潔架構</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">發表於</span>
-
-      <time title="創建時間：2023-12-12 07:53:07" itemprop="dateCreated datePublished" datetime="2023-12-12T07:53:07+08:00">2023-12-12</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分類於</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Clean-Architecture/" itemprop="url" rel="index"><span itemprop="name">Clean Architecture</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>前言</li>
-<li>使用簡潔架構的優勢</li>
-<li>簡潔架構三原則</li>
-<li>結論</li>
-<li>參考資料</li>
-</ul>
-<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>為甚麼需要軟體架構？<br>Uncle Bob 在書中提到了這個概念，使用軟體架構是為了最小化建置和維護系統時所需要的成本。</p>
-<blockquote>
-<p>“The goal of software architecture is to minimize the human resources required to build and maintain the required system.” ― Robert C. Martin, Clean Architecture</p>
-</blockquote>
-<p>在執行專案時，我們都會希望開發的時程越短越好，但如果在開發時沒有去運用架構，僅僅只是完成需求上的功能就好，就有可能將這些忽略的開發成本無形地轉嫁到後續的維運成本。<br>舉例來說，一個已經上線的專案突然要改變 UI，如果沒有設計好架構，可能就要連動到商業邏輯的修改，導致你在維運階段就需要花更多時間去測試和滿足需求。<br>因此我們會需要了解簡潔架構，簡潔架構會透過三個原則，分別是相依性原則、分層原則和跨層原則來達到關注點分離，也就是說系統核心不會知道外部所使用資料庫、框架和 UI 是甚麼，只需要關注本身的商業邏輯。後續即便有需求變更，也可以更快速聚焦和修改，維運成本也隨之降低。</p>
-<p>要特別提到的是這邊提到的三大原則並沒有在 Clean Architecture 書中所定義，而是先前在上 Teddy 的課程中，他對於Clean Architecture全書做的總結，因覺得這樣能更容易理解簡潔架構，所以在這篇文章中會使用三大原則來說明簡潔架構。</p>
-<blockquote>
-<p>來源請參考: <a target="_blank" rel="noopener" href="https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html">https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html</a></p>
-</blockquote>
-<h2 id="使用簡潔架構的優勢"><a href="#使用簡潔架構的優勢" class="headerlink" title="使用簡潔架構的優勢"></a>使用簡潔架構的優勢</h2><ul>
-<li><p>獨立框架</p>
-<p>  將框架當作工具來使用，而工具是可以被替換的，也就是系統內層不會依賴於框架</p>
-</li>
-<li><p>獨立 UI</p>
-<p>  UI的變動不會影響到商業邏輯，因 UI 時常會因滿足客戶需求而進行變動</p>
-</li>
-<li><p>獨立 Database: </p>
-<p>  將資料庫也作為工具使用，舉例來說，原先使用 MySQL，但後續想要改使用 MongoDB 也能直接替換卻不會影響到商業邏輯。套用到其他中間件也是，像是 Message Queue，一樣也能將 kafka 或 RabbitMQ 當作工具來使用</p>
-</li>
-<li><p>獨立外部服務: </p>
-<p>  將商業邏輯與外部系統切開</p>
-</li>
-<li><p>可測試: </p>
-<p>  商業邏輯可以在沒有 UI、資料庫和其他中間件等等的情況下進行測試</p>
-</li>
-</ul>
-<h2 id="簡潔架構三原則"><a href="#簡潔架構三原則" class="headerlink" title="簡潔架構三原則"></a>簡潔架構三原則</h2><p><img src="https://blog.cleancoder.com/uncle-bob/images/2012-08-13-the-clean-architecture/CleanArchitecture.jpg" alt="Clean Architecture"></p>
-<h3 id="分層原則"><a href="#分層原則" class="headerlink" title="分層原則"></a>分層原則</h3><p>那在簡潔架構中，主要我們會分成4層，而每一層都有其負責的用途及功能：</p>
-<ul>
-<li><p>Entitiy</p>
-<p>  商業邏輯層，Entity 可以是一個物件，也可以是一組資料結構，Entity 不會受到外部的影響(像是DB或UI)，關注的重點只有他自己。</p>
-</li>
-<li><p>UseCase</p>
-<p>  使用案例層，系統中所有的使用案例都會封裝在這一層，控制 entities 資料的流動，並在這層透過依賴反轉去操控外部系統 (e.g. DB) 去滿足使用案例。舉例來說，建立、修改及刪除會員都可以個別視為一個 UseCase。</p>
-</li>
-<li><p>Interface Adapter</p>
-<p>  接口轉換層，負責資料的接收和資料格式的轉換。舉例來說，當會員資料透過 RESTful API 傳送到系統，就會由這一層接收，並且做轉換再傳入到 UseCase 層。</p>
-</li>
-<li><p>Framework &amp; Driver</p>
-<p>  負責框架、DB 和外部服務的相關設定及實作</p>
-</li>
-</ul>
-<h3 id="相依性原則"><a href="#相依性原則" class="headerlink" title="相依性原則"></a>相依性原則</h3><p>從上面的圖可以了解到簡潔架構是由四個同心圓組成，而越往內層，層級就越高。最內層是處理商業邏輯的核心，而外層就偏向於處理流程上的機制，因此程式碼的依賴只能由外往內。簡單來說，內層的程式碼不能引入外層的變數、函式或類別等等，這就是相依性原則。</p>
-<h3 id="跨層原則"><a href="#跨層原則" class="headerlink" title="跨層原則"></a>跨層原則</h3><p>簡潔架構在做跨層資料的輸入或輸出時，都會使用基本的資料結構來傳遞，也就是將原先的物件再重新包裝程一個純資料結構的物件再傳送，這樣可以避免違反相依性原則。</p>
-<p>舉例來說，當建立會員時，會先由 Adapter 層接收 Restful API 的請求，而當我們需要調用 UseCase 層去新增會員時，就會需要先建立一個純POJO在UseCase層讓Adapter進行轉換，藉此UseCase層就不會引用到外層的東西。</p>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在以往的開發過程中，如果我們使用MVC架構，因為沒有相依性原則和跨層原則的規範，就會是直接建立實作類別。而在缺少了介面定義的情況下，單元測試就會相對難寫。另外在沒有單元測試的情況下，維護上就容易出現改Ａ壞Ｂ，增加維運的成本。所以我們可以透過簡潔架構來將系統進行分層，將商業邏輯和外部系統、框架做一個解耦，一方面是我們能更彈性的去抽換中間件，另一方面則是在測試上更容易可以去撰寫。</p>
-<p>接下來我會有一系列的文章來說明如何在Golang使用簡潔架構。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">The Clean Architecture - Uncle Bob</a></li>
-<li><a target="_blank" rel="noopener" href="https://teddy-chen-tw.blogspot.com/2020/08/clean-architecture.html">再談Clean Architecture三原則</a></li>
-<li><a target="_blank" rel="noopener" href="https://ithelp.ithome.com.tw/articles/10222311">DDD 架構： 整合 Clean Architecture</a></li>
-</ul>
 
       
     </div>
