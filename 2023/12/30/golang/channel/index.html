@@ -21,15 +21,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。 目錄 GoRoutine Channel Buffered a">
+    <meta name="description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="如何使用 Golang 中的 Channel">
 <meta property="og:url" content="http://billyang3416.github.io/project/2023/12/30/golang/channel/index.html">
 <meta property="og:site_name" content="B1LLGOAT">
-<meta property="og:description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。 目錄 GoRoutine Channel Buffered a">
+<meta property="og:description" content="前言在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。">
 <meta property="og:locale" content="zh_TW">
 <meta property="article:published_time" content="2023-12-30T08:36:42.000Z">
-<meta property="article:modified_time" content="2024-01-06T06:45:41.635Z">
+<meta property="article:modified_time" content="2024-02-10T01:42:01.230Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="Golang">
 <meta property="article:tag" content="Concurrency">
@@ -219,7 +219,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:42:01" itemprop="dateModified" datetime="2024-02-10T09:42:01+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -242,6 +242,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，<br>再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，<br>最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。</p>
+<span id="more"></span>
+
 <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
 <li>GoRoutine</li>
 <li>Channel</li>

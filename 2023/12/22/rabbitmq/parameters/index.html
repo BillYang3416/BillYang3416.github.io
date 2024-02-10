@@ -29,7 +29,7 @@
 <meta property="og:description" content="前言當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。而這些參數通常會需要在 runtime 期間可以被改動的，所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 官方所推薦的作法。這篇文章會介紹這些參數的用途和如何使用 Policy 進行">
 <meta property="og:locale" content="zh_TW">
 <meta property="article:published_time" content="2023-12-22T09:02:38.000Z">
-<meta property="article:modified_time" content="2024-01-06T02:36:41.628Z">
+<meta property="article:modified_time" content="2024-02-10T01:43:40.900Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="RabbitMQ">
 <meta property="article:tag" content="Policy">
@@ -219,7 +219,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:43:40" itemprop="dateModified" datetime="2024-02-10T09:43:40+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -242,6 +242,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，<br>我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。<br>而這些參數通常會需要在 runtime 期間可以被改動的，<br>所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 官方所推薦的作法。<br>這篇文章會介紹這些參數的用途和如何使用 Policy 進行配置。</p>
+<span id="more"></span>
+
 <blockquote>
 <p>以 Queue 來說，如果建立時有綁定 message-ttl 就代表無法更改值，除非將 Queue 砍掉在重建。</p>
 </blockquote>

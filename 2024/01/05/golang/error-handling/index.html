@@ -21,15 +21,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="前言一談到錯誤處理，大家可能都會想到 try-catch 和 Exception，但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 try-catch 只有 if。本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。 目錄 Build-In Error 建立客製的錯誤  Built-">
+    <meta name="description" content="前言一談到錯誤處理，大家可能都會想到 try-catch 和 Exception，但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 try-catch 只有 if。本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="淺談 Golang 的錯誤處理">
 <meta property="og:url" content="http://billyang3416.github.io/project/2024/01/05/golang/error-handling/index.html">
 <meta property="og:site_name" content="B1LLGOAT">
-<meta property="og:description" content="前言一談到錯誤處理，大家可能都會想到 try-catch 和 Exception，但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 try-catch 只有 if。本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。 目錄 Build-In Error 建立客製的錯誤  Built-">
+<meta property="og:description" content="前言一談到錯誤處理，大家可能都會想到 try-catch 和 Exception，但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 try-catch 只有 if。本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。">
 <meta property="og:locale" content="zh_TW">
 <meta property="article:published_time" content="2024-01-04T22:45:16.000Z">
-<meta property="article:modified_time" content="2024-01-06T06:45:41.636Z">
+<meta property="article:modified_time" content="2024-02-10T01:41:13.945Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="Golang">
 <meta name="twitter:card" content="summary">
@@ -218,7 +218,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:13" itemprop="dateModified" datetime="2024-02-10T09:41:13+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -241,6 +241,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一談到錯誤處理，大家可能都會想到 <code>try-catch</code> 和 Exception，<br>但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 <code>try-catch</code> 只有 if。<br>本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。</p>
+<span id="more"></span>
+
 <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
 <li>Build-In Error</li>
 <li>建立客製的錯誤</li>

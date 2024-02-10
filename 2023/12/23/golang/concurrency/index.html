@@ -32,7 +32,7 @@
 <meta property="og:image" content="http://billyang3416.github.io/2023/12/23/golang/concurrency/parallelism.png">
 <meta property="og:image" content="http://billyang3416.github.io/2023/12/23/golang/concurrency/concurrency.png">
 <meta property="article:published_time" content="2023-12-23T09:00:50.000Z">
-<meta property="article:modified_time" content="2024-01-06T06:45:41.636Z">
+<meta property="article:modified_time" content="2024-02-10T01:41:17.586Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="Golang">
 <meta property="article:tag" content="Concurrency">
@@ -223,7 +223,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:17" itemprop="dateModified" datetime="2024-02-10T09:41:17+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -246,6 +246,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>相信很多人在學習 GO 以前，都知道 GO 在處理並發時相對其他程式語言具有優勢，<br>我們能使用 GoRoutine(輕量化的Thread) 搭配 Channel 來處理並發，而且撰寫上也相對簡單。<br>因此這篇文章首先會介紹 Concurrency 的概念，再來說明如何使用 WaitGroup 來處理並發，<br>並且透過 Mutex 和 Atomic 來處理並發產生的 Race Condition，<br>至於 Channel 則會在未來的文章會與大家做介紹。</p>
+<span id="more"></span>
+
 <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
 <li>Concurrency </li>
 <li>WaitGroup</li>

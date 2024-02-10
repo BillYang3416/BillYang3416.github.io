@@ -21,15 +21,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"billyang3416.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.13.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜尋...","empty":"我們無法找到任何有關 ${query} 的搜索結果","hits_time":"${hits} 找到 ${time} 個結果","hits":"找到 ${hits} 個結果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="前言本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，接著就會針對 pgx 這個套件作更進一步的說明和介紹，那因爲 pgx 是使用原生SQL去操作 PostgresSQL，所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。 目錄 套件的選擇 如何使用 pgx 使用 sq">
+    <meta name="description" content="前言本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，接著就會針對 pgx 這個套件作更進一步的說明和介紹，那因爲 pgx 是使用原生SQL去操作 PostgresSQL，所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="在 Golang 操作 PostgresSQL">
 <meta property="og:url" content="http://billyang3416.github.io/project/2024/01/17/golang/pgx/index.html">
 <meta property="og:site_name" content="B1LLGOAT">
-<meta property="og:description" content="前言本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，接著就會針對 pgx 這個套件作更進一步的說明和介紹，那因爲 pgx 是使用原生SQL去操作 PostgresSQL，所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。 目錄 套件的選擇 如何使用 pgx 使用 sq">
+<meta property="og:description" content="前言本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，接著就會針對 pgx 這個套件作更進一步的說明和介紹，那因爲 pgx 是使用原生SQL去操作 PostgresSQL，所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。">
 <meta property="og:locale" content="zh_TW">
 <meta property="article:published_time" content="2024-01-17T13:41:07.000Z">
-<meta property="article:modified_time" content="2024-01-21T09:04:30.553Z">
+<meta property="article:modified_time" content="2024-02-10T01:40:33.987Z">
 <meta property="article:author" content="Bill Yang">
 <meta property="article:tag" content="Golang">
 <meta property="article:tag" content="Postgres">
@@ -219,7 +219,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-21 17:04:30" itemprop="dateModified" datetime="2024-01-21T17:04:30+08:00">2024-01-21</time>
+      <time title="修改時間：2024-02-10 09:40:33" itemprop="dateModified" datetime="2024-02-10T09:40:33+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -246,6 +246,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，<br>首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，<br>接著就會針對 pgx 這個套件作更進一步的說明和介紹，<br>那因爲 pgx 是使用原生SQL去操作 PostgresSQL，<br>所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。</p>
+<span id="more"></span>
+
 <h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
 <li>套件的選擇</li>
 <li>如何使用 pgx</li>

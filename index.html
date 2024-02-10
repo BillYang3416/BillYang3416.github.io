@@ -213,7 +213,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-21 17:04:30" itemprop="dateModified" datetime="2024-01-21T17:04:30+08:00">2024-01-21</time>
+      <time title="修改時間：2024-02-10 09:40:33" itemprop="dateModified" datetime="2024-02-10T09:40:33+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -240,102 +240,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章主要會說明在 Golang 中操作 PostgresSQL 的套件及其方法，<br>首先會先說明原生SQL和 ORM 的差別以及介紹相關的開源套件，<br>接著就會針對 pgx 這個套件作更進一步的說明和介紹，<br>那因爲 pgx 是使用原生SQL去操作 PostgresSQL，<br>所以最後會說明如何搭配 squirrel 使用去組出 pgx 所需要的原生SQL。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>套件的選擇</li>
-<li>如何使用 pgx</li>
-<li>使用 squirrel 組出 SQL Query</li>
-</ul>
-<h2 id="套件的選擇"><a href="#套件的選擇" class="headerlink" title="套件的選擇"></a>套件的選擇</h2><p>當我們要在 Golang 中連接 PostgresSQL 時，<br>有幾種套件可以挑選，那我們先將這些套件分成兩類在一一說明，<br>第一個是 Drivers，當我們要對資料庫做新刪查改時都是使用基本的 SQL 語句，也就是 <code>Plain SQL</code>。<br>另一個就是 ORM (Object-Relational-Mapping)，<br>在物件導向的語言中，通常都會有 ORM 的套件來將物件轉換成資料庫的資料，<br>這中間不需要開發者組出SQL語句，而是透過套件來組成，像是 JAVA 中的 Hibernate。<br>而 Golang 雖然並非純物件導向的語言，但一樣也有第三方套件提供了這種作法。</p>
-<h3 id="Drivers-Plain-SQL"><a href="#Drivers-Plain-SQL" class="headerlink" title="Drivers (Plain SQL)"></a>Drivers (Plain SQL)</h3><h4 id="pq"><a href="#pq" class="headerlink" title="pq"></a>pq</h4><blockquote>
-<p><a target="_blank" rel="noopener" href="https://github.com/lib/pq">lib&#x2F;pq</a></p>
-</blockquote>
-<p>pq 是連接 PostgresSQL 的 driver 之一，<br>通常會與標準函式庫的 <code>database/sql</code> 搭配使用。<br>優點就是簡單上手且可隨時切換成不同的資料庫，不會被 PostgresSQL 所綁住，<br>但缺點就是效能頗差。<br>另外值得一提的是該套件的開發者已經宣告停止出新的功能，<br>目前處於 <code>maintain</code> 的狀態，而開發者則推薦使用 pgx 作為連接 PostgresSQL 的 driver </p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;database/sql&quot;</span></span><br><span class="line"></span><br><span class="line">	_ <span class="string">&quot;github.com/lib/pq&quot;</span> <span class="comment">// implicitly import</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	connStr := <span class="string">&quot;user=pqgotest dbname=pqgotest sslmode=verify-full&quot;</span></span><br><span class="line">	db, err := sql.Open(<span class="string">&quot;postgres&quot;</span>, connStr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatal(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	age := <span class="number">21</span></span><br><span class="line">	rows, err := db.Query(<span class="string">&quot;SELECT name FROM users WHERE age = $1&quot;</span>, age)</span><br><span class="line">	…</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>程式碼取自 <a target="_blank" rel="noopener" href="https://pkg.go.dev/github.com/lib/pq">go pkg</a></p>
-</blockquote>
-<h4 id="pgx"><a href="#pgx" class="headerlink" title="pgx"></a>pgx</h4><blockquote>
-<p><a target="_blank" rel="noopener" href="https://github.com/jackc/pgx">jackc&#x2F;pgx</a></p>
-</blockquote>
-<p>如果要在 Golang 中操作 PostgresSQL，可以說 pgx 應該是目前最多人推薦的選擇，<br>他有幾個優勢，首先要說的就是效能，他的效能比 pq 或者是 Gorm 都還要好，<br>並且他也有支援 <code>database/sql</code> 的用法，<br>也就是說我們也可以像前面 pq 的程式碼一樣去使用 <code>database/sql</code> 去下語法，<br>但實際與 PostgresSQL 對接的還是 pgx。<br>再來，最重要的是 pgx 他還支援一些 PostgresSQL 特性的實現，<br>而這一些都是 pq 和 database&#x2F;sql 沒辦法滿足的需求。<br>但缺點就是當要切換不同的資料庫時，會比較難改動，<br>再來就是 pgx 相對 pq 複雜，需要多一點時間學習。<br>在後續的文章中，我會在介紹關於 pgx 的一些使用方法。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	_ <span class="string">&quot;github.com/jackc/pgx/v4/stdlib&quot;</span> <span class="comment">// implicitly import</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-
-<h3 id="ORM-Object-Relational-Mapping"><a href="#ORM-Object-Relational-Mapping" class="headerlink" title="ORM (Object-Relational-Mapping)"></a>ORM (Object-Relational-Mapping)</h3><h4 id="GORM"><a href="#GORM" class="headerlink" title="GORM"></a>GORM</h4><p>雖然 Golang 並非純物件導向的語言，但因爲有 struct、method 和 interface，<br>所以我們可以使用 struct 來對應 database 中的 table。<br>而 GORM 就是提供了這樣的方法來實現 ORM，並且他還能自動建立新的 schema 和 table，<br>也能改變舊有 table 的結構。<br>此外對於資料庫的新刪查改也是能非常簡單地去實現。<br>因此可以說他的優點就是開發上相對簡單，並且不受限於不同資料庫的限制，可以隨時無痛轉換，<br>而他的缺點大概有兩個，其一是效能，因為我們是透過套件去產出SQL語句，<br>相對效能一定會比直接下原生SQL來得差，<br>其二就是無法寫出複雜的 Queries，碰到這類情況時，可能還是需要使用原生的SQL來解決。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Product <span class="keyword">struct</span> &#123;</span><br><span class="line">  gorm.Model</span><br><span class="line">  Code  <span class="type">string</span></span><br><span class="line">  Price <span class="type">uint</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  db, err := gorm.Open(sqlite.Open(<span class="string">&quot;test.db&quot;</span>), &amp;gorm.Config&#123;&#125;)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="built_in">panic</span>(<span class="string">&quot;failed to connect database&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Migrate the schema</span></span><br><span class="line">  db.AutoMigrate(&amp;Product&#123;&#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Create</span></span><br><span class="line">  db.Create(&amp;Product&#123;Code: <span class="string">&quot;D42&quot;</span>, Price: <span class="number">100</span>&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>程式碼取自 <a target="_blank" rel="noopener" href="https://gorm.io/docs/">GORM Guides</a></p>
-</blockquote>
-<h4 id="選擇的建議"><a href="#選擇的建議" class="headerlink" title="選擇的建議"></a>選擇的建議</h4><p>那在介紹完上述的套件之後，<br>我認為沒有哪個套件一定是最好，<br>假設今天你的系統只會有簡單的CRUD並且也不追求效能的話，<br>那其實就可以選擇使用 GORM 來減少寫原生SQL的時間，同時也能降低開發者的學習成本。<br>但如果另一個系統非常追求效能並且有很多複雜的 Queries 時，<br>就應該改使用 pgx 寫原生SQL，相對的時間成本也會提高，<br>所以依據系統的需求和情境來選擇套件才會是最佳解。</p>
-<h2 id="如何使用-pgx"><a href="#如何使用-pgx" class="headerlink" title="如何使用 pgx"></a>如何使用 pgx</h2><p>接下來我們來了解如何使用 pgx：</p>
-<h3 id="建立專案"><a href="#建立專案" class="headerlink" title="建立專案"></a>建立專案</h3><p>在使用之前，我們先使用兩個指令來建立專案和載入套件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go mod init &lt;project-name&gt;</span><br><span class="line">go get github.com/jackc/pgx/v5</span><br></pre></td></tr></table></figure>
-
-<h3 id="連接-PostgresSQL"><a href="#連接-PostgresSQL" class="headerlink" title="連接 PostgresSQL"></a>連接 PostgresSQL</h3><p>使用 pgx 連接 PostgresSQL 的方式可以分為兩種，<br>第一種就是使用 <code>pgx.Connect</code>，這種方式只會與資料庫建立一條連線，<br>適合用於簡單的專案，像是 script 或範例。<br>但如果專案是 web service 的性質，那就非常的不適合，<br>因為同一時間可能會有多個使用者發請求到後端，<br>而後端同時有多個 <code>Concurrent</code> 的請求要對資料庫做異動時，就會被卡住。<br>因此通常 web service 都會推薦使用第二種方式，也就是 <code>pgxpool</code>，<br>這個方式會建立多條和資料庫的連線，藉此來滿足多個請求對資料庫的操作。</p>
-<blockquote>
-<p>想多了解 Connection Pooling 可以參考 <a target="_blank" rel="noopener" href="https://stackoverflow.com/a/4041136">What is database pooling?</a></p>
-</blockquote>
-<h4 id="pgx-Connect"><a href="#pgx-Connect" class="headerlink" title="pgx.Connect"></a>pgx.Connect</h4><p>下面程式碼是我們在使用 pgx.Connect 的範例，<br>有幾個地方可以來說明一下，</p>
-<ul>
-<li><p>contexnt.Background()</p>
-<p>context 是標準函式庫之一，主要是用來對執行的進程做取消或是加上timeout，這邊可以舉一個 request 的例子，<br>假設前端向後端發出了請求，那這個請求就會產生 request-scoped 的 context，<br>假設今天前端突然取消了請求，就可以透過這個 context 去結束對資料庫的操作</p>
-</li>
-<li><p>os.Getenv(“DATABASE_URL”)</p>
-<p>這個是指從環境變數取得資料庫的連線資訊，URL 的形式如同 <code>postgres://username:password@host:port/dbname</code></p>
-</li>
-<li><p>defer conn.Close(…)</p>
-<p>每當我們向資料庫建立連線時都需要記得關閉，這和開檔和關檔的道理是一樣的，避免資源的耗用。<br>至於 defer 則代表當 main function return 後才會執行，因為程式對資料庫的操作已經結束了，不需要再保持連線。<br>如果沒有加上 defer 就會導致連線建立後就馬上關閉</p>
-</li>
-</ul>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	conn, err := pgx.Connect(context.Background(), os.Getenv(<span class="string">&quot;DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">defer</span> conn.Close(context.Background())</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="pgxpool"><a href="#pgxpool" class="headerlink" title="pgxpool"></a>pgxpool</h4><p>而 pgxpool 建立 pool 的方式可以分為兩種，<br>第一種就是使用 <code>pgxpool.New</code>，用法和 <code>pgx.Connect</code> 類似。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">	<span class="string">&quot;github.com/jackc/pgx/v5/pgxpool&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	dbpool, err := pgxpool.New(context.Background(), os.Getenv(<span class="string">&quot;LOCAL_DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> dbpool.Close()</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>而另一種就是使用 <code>pgxpool.NewWithConfig</code>，<br>這個用法的優勢就在於彈性，<br>當你今天想要在程式決定最大或最小的連線數又或者是在連線的建立前後去做一些事情都可以透過 config 去設定。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	config, err := pgxpool.ParseConfig(os.Getenv(<span class="string">&quot;DATABASE_URL&quot;</span>))</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to parase config : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	config.MaxConns = <span class="number">10</span> <span class="comment">// 最大的連線數</span></span><br><span class="line">	config.AfterConnect = <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, conn *pgx.Conn)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">		<span class="comment">// 在連線建立後，額外做一些事情</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	pool, err := pgxpool.NewWithConfig(context.Background(), config)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;Unabled to connect to database : %v\n&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">defer</span> pool.Close()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="執行-SQL-Queries"><a href="#執行-SQL-Queries" class="headerlink" title="執行 SQL Queries"></a>執行 SQL Queries</h3><p>接下來我們來了解如何使用 pgx 來執行 SQL Queries，<br>這邊我們準備了銀行帳戶的 table 來作為示範用。</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> IF <span class="keyword">NOT</span> <span class="keyword">EXISTS</span> bank_accounts (</span><br><span class="line">    account_number <span class="type">VARCHAR</span>(<span class="number">20</span>) <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">    account_holder_name <span class="type">VARCHAR</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    balance <span class="type">DECIMAL</span>(<span class="number">12</span>, <span class="number">2</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">    account_type <span class="type">VARCHAR</span>(<span class="number">50</span>),</span><br><span class="line">    opened_date <span class="type">DATE</span>,</span><br><span class="line">    is_active <span class="type">BOOLEAN</span> <span class="keyword">DEFAULT</span> <span class="literal">TRUE</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> bank_accounts (account_number, account_holder_name, balance, account_type, opened_date, is_active)</span><br><span class="line"><span class="keyword">VALUES</span></span><br><span class="line">    (<span class="string">&#x27;1234567890&#x27;</span>, <span class="string">&#x27;王大名&#x27;</span>, <span class="number">5000.00</span>, <span class="string">&#x27;儲蓄&#x27;</span>, <span class="string">&#x27;2022-01-15&#x27;</span>, <span class="literal">TRUE</span>),</span><br><span class="line">    (<span class="string">&#x27;9876543210&#x27;</span>, <span class="string">&#x27;陳康&#x27;</span>, <span class="number">7500.50</span>, <span class="string">&#x27;支票&#x27;</span>, <span class="string">&#x27;2022-02-10&#x27;</span>, <span class="literal">TRUE</span>),</span><br><span class="line">    (<span class="string">&#x27;4444555566&#x27;</span>, <span class="string">&#x27;楊小胖&#x27;</span>, <span class="number">12000.25</span>, <span class="string">&#x27;儲蓄&#x27;</span>, <span class="string">&#x27;2022-04-20&#x27;</span>, <span class="literal">TRUE</span>);</span><br></pre></td></tr></table></figure>
-
-<h4 id="QueryRow"><a href="#QueryRow" class="headerlink" title="QueryRow"></a>QueryRow</h4><p>當我們想要透過唯一識別符像是 PK 來查出一筆資料時，<br>就可以使用 <code>pgxpool.QueryRow()</code> 搭配 Scan 取出資料，<br>下面程式碼就是使用 <code>QueryRow</code> 來取得帳戶為 <code>1234567890</code> 的資料。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">  accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line">	<span class="keyword">var</span> b bankAccount</span><br><span class="line">	err := pool.QueryRow(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;SELECT account_holder_name, balance, account_type, opened_date, is_active FROM bank_accounts WHERE account_number = $1&quot;</span>,</span><br><span class="line">		accountNumber).Scan(b)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(b)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>通常 <code>QueryRow</code> 都是搭配 Select 使用，但在某些情況下，<br>我們可能會需要在 Insert 後取得資料的 PK，就可以使用 <code>QueryRow</code> 來取得 Return Clause 的資料。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span> <span class="params">()</span></span> &#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> returnedAccountNumber <span class="type">string</span></span><br><span class="line">	err := pool.QueryRow(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;INSERT INTO bank_accounts (account_number,account_holder_name, balance, account_type, opened_date, is_active) VALUES  ($1,$2,$3,$4,$5,$6) RETURNING account_number&quot;</span>,</span><br><span class="line">		accountNumber, accountHolderName, balance, accountType, openedDate, isActive)</span><br><span class="line">    .Scan(&amp;returnedAccountNumber)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;Inserted Account Number&quot;</span>, returnedAccountNumber)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Exec"><a href="#Exec" class="headerlink" title="Exec"></a>Exec</h4><p>至於 Exec 則通常用於 Insert、Update 和 Delete 比較多，<br>因為這些 Queries 不像 Select 是要把資料查回來，<br>對於資料的新刪改，我們通常不需要再回傳資料。<br>下面程式碼就是使用 <code>Exec</code> 更新 <code>1234567890</code> 帳戶的餘額。<br>另外 <code>Exec</code> 回傳的 commandTag 則是可以幫助我們判斷這次所執行的資料異動是否有成功。 </p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	balance := <span class="number">200</span></span><br><span class="line">	accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line"></span><br><span class="line">	commandTag, err := pool.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		balance, accountNumber,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to update data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> commandTag.RowsAffected() == <span class="number">0</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;No rows updated&quot;</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;%d row(s) updated.\n&quot;</span>, commandTag.RowsAffected())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Query"><a href="#Query" class="headerlink" title="Query"></a>Query</h4><p>那前面我們提到了可以使用 <code>QueryRow</code> 透過唯一識別符來取得單筆資料，<br>但在 Select 的情境中，通常我們都會需要根據範圍或條件來查詢多筆資料，<br>因此就可以使用 <code>Query</code> 搭配 <code>CollectRows</code> 或 <code>ForEachRow</code> 來取得多筆資料的結果。<br>接下來我們使用查詢多筆帳戶的案例來示範這些用法。</p>
-<p>首先我們先來看 <code>CollectRows</code>，<br>當我們要將資料庫的資料轉換成 slice 時，<br>就可以使用 <code>CollectRows</code> 搭配 <code>RowTo</code>。<br>另外可以看到在使用 <code>Query</code> 時需要加上 <code>rows.Close()</code>，<br>代表在讀取完多筆資料後，我們要將連線資源釋放出去。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	rows, err := pool.Query(</span><br><span class="line">		context.Background(), </span><br><span class="line">		<span class="string">&quot;SELECT account_number FROM bank_accounts&quot;</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unabled to execute query:&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> rows.Close() <span class="comment">// </span></span><br><span class="line"></span><br><span class="line">	accountNumbers,err := pgx.CollectRows(rows, pgx.RowTo[<span class="type">string</span>])</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Error collecting rows:&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>另外也可以透過 <code>ForEachRow</code> 來自定義 callback func，<br>藉此在讀取多筆資料時，可以增加一些條件判斷或計算額外資訊。<br>像下面的程式碼就是要加總出所有帳戶的餘額。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> balance <span class="type">float64</span></span><br><span class="line">	<span class="keyword">var</span> totalBalance <span class="type">float64</span></span><br><span class="line"></span><br><span class="line">	rows, _ := pool.Query(context.Background(), <span class="string">&quot;SELECT balance FROM bank_accounts&quot;</span>)</span><br><span class="line"></span><br><span class="line">	_, err := pgx.ForEachRow(rows, []any&#123;&amp;balance&#125;, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> <span class="type">error</span> &#123;</span><br><span class="line">		totalBalance += balance</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Error iterating rows:&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Println(<span class="string">&quot;Total Balance: &quot;</span>, totalBalance)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Tx"><a href="#Tx" class="headerlink" title="Tx"></a>Tx</h4><p>上述提到的 <code>QueryRow</code>、<code>Exec</code> 和 <code>Qeury</code> 只針對單一的 SQL Query，<br>那如果我們有多個 SQL Queries 的情況下，也就是 transaction，<br>就可以使用 <code>tx</code> 來確保 ACID。<br>舉例來說，如果今天有帳戶A需要轉帳給帳戶B時，這代表我們需要執行兩個 SQL Queries，<br>在這種情況下兩個 SQL Queries 必須要全部成功或全部失敗，也就是確保 Atomicity。<br>如果沒有將這些 SQL Queries 組成為一個 transaction，<br>就有可能發生帳戶A餘額被扣除，但帳戶B餘額沒有被增加的情況。</p>
-<blockquote>
-<p>想多了解 transaction 和 ACID 可以參考 <a href="https://billyang3416.github.io/2024/01/08/database/acid/">淺談關聯資料庫的 ACID</a></p>
-</blockquote>
-<p>下圖的程式碼是使用轉帳的案例來示範，<br>可以看到我們會需要先使用 <code>Begin</code>，這代表我們啟動了一個 transaction，<br>再來就是使用 <code>Rollback</code> 確保當有錯誤發生時，已經成功的 SQL Queries 也必須 rollback，<br>至於其中 SQL Queries 則透過 <code>Exec</code> 來執行，<br>最後要執行的就是 <code>Commit</code> 代表生效所有的資料異動。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	tx, err := pool.Begin(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to start transaction: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> tx.Rollback(context.Background()) <span class="comment">// 只要有錯誤發生時，前面執行成功的 SQL Queries就要 rollback</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 帳戶1扣除餘額</span></span><br><span class="line">	_, err := tx.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = balance - $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		<span class="number">100</span>, <span class="string">&quot;1234567890&quot;</span>,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to update data: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 帳戶2增加餘額</span></span><br><span class="line">	_, err = tx.Exec(</span><br><span class="line">		context.Background(),</span><br><span class="line">		<span class="string">&quot;UPDATE bank_accounts SET balance = balance + $1 WHERE account_number = $2&quot;</span>,</span><br><span class="line">		<span class="number">100</span>, <span class="string">&quot;9876543210&quot;</span>,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to update data: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err = tx.Commit(context.Background()); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;Unable to commit transaction: &quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>另外如果我們需要改變 transaction 的行為，<br>像是設定不同的 Isolation Level 就可以使用 <code>BeignTx</code>。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	tx, err := pool.BeginTx(context.Background(), pgx.TxOptions&#123;IsoLevel: pgx.Serializable&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="使用-squirrel-組出-SQL-Query"><a href="#使用-squirrel-組出-SQL-Query" class="headerlink" title="使用 squirrel 組出 SQL Query"></a>使用 squirrel 組出 SQL Query</h2><blockquote>
-<p><a target="_blank" rel="noopener" href="https://github.com/Masterminds/squirrel">Masterminds&#x2F;squirrel</a></p>
-</blockquote>
-<p>在先前的程式碼中，可以看到我們都需要寫出一個長長的 SQL Query，<br>這種方法有兩個缺點，其一是寫起來比較麻煩，其二就是不容易閱讀，<br>因此我們可以透過 squirrel 這個套件來幫我們組出 SQL Query。</p>
-<p>這邊我們拿先前的程式碼來做改寫，可以看到我們都使用方法來代表 SQL Query 中的關鍵字，<br>像是 Select、From、Where，接著再搭配參數來組合成 SQL Query，<br>如此一來，不僅撰寫上變得簡單，並且程式碼的可讀性也增加了。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	accountNumber := <span class="string">&quot;1234567890&quot;</span></span><br><span class="line"></span><br><span class="line">	query, args, err := squirrel</span><br><span class="line">		.Select(<span class="string">&quot;account_holder_name&quot;</span>, <span class="string">&quot;balance&quot;</span>, <span class="string">&quot;account_type&quot;</span>, <span class="string">&quot;opened_date&quot;</span>, <span class="string">&quot;is_active&quot;</span>)</span><br><span class="line">		.From(<span class="string">&quot;bank_accounts&quot;</span>)</span><br><span class="line">		.Where(squirrel.Eq&#123;<span class="string">&quot;accoount_number&quot;</span> : accountNumber&#125;)</span><br><span class="line">		.ToSql()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> b bankAccount</span><br><span class="line">	err := pool.QueryRow(context.Background(), query, args).Scan(b)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Unable to query data: %v&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>一開始我們先分析了使用原生SQL或ORM的優缺點，<br>並且建議依據系統和場景來做出選擇。<br>接著在說明 pgx 的使用方式，像是 <code>QueryRow</code>、<code>Exec</code> 和 <code>Query</code>，<br>這三個都各自有不同的使用場景，並且也說明 transaction 的相關用法。<br>最後則是介紹 squirrel，這個套件能幫助我們在撰寫原生SQL上更加簡單及順手，並且也增加程式碼的可讀性。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://preslav.me/2022/05/13/pq-or-pgx-choosing-the-right-postgresql-golang-driver/">pq or pgx - Which Driver Should I Go With?</a></li>
-<li><a target="_blank" rel="noopener" href="https://medium.com/hyperskill/using-gorm-versus-plain-sql-to-interact-with-databases-in-go-39728974edc8">Using GORM Versus Plain SQL to Interact with Databases in Go</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/17/golang/pgx/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -397,7 +309,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-12 23:39:11" itemprop="dateModified" datetime="2024-01-12T23:39:11+08:00">2024-01-12</time>
+      <time title="修改時間：2024-02-10 09:42:20" itemprop="dateModified" datetime="2024-02-10T09:42:20+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -420,85 +332,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在本篇文章中，我們會先介紹甚麼是 transaction，<br>因為 transaction 是 ACID 的關鍵概念，必須先理解 transaction 才能懂這4個特性要達到的目的，<br>而這4個特性分別是 <code>Atomicity</code>、<code>Isolation</code>、<code>Consistency</code> 和 <code>Durability</code>，<br>也是關聯式資料庫運作時所遵循的原理。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Transaction</li>
-<li>Atomicity</li>
-<li>Isolation</li>
-<li>Consistency</li>
-<li>Durability</li>
-</ul>
-<h2 id="Transaction"><a href="#Transaction" class="headerlink" title="Transaction"></a>Transaction</h2><p>甚麼是 Transaction ?<br>Transaction 在關聯式資料庫的概念就是一組 DML (Data Manipulation Language) 的集合，<br>像是我們平常看到 Insert、Update、Delete 和 Select，<br>將這些排列組合起來後就可以稱為一個 Transaction。<br>以銀行轉帳為例，假設大明想要轉帳一百塊給小王，<br>那銀行就會先查詢出大明的帳戶，接著就會先扣除大明帳戶的一百塊，最後將小王的帳戶增加一百塊。<br>在這樣的流程裡，其實就包含3個 SQL Queries，分別是 Select、Update 和 Update，<br>將其組合起來就會是一個 Transaction。</p>
-<p>另外 Transaction 從開始到結束，大概有這幾種狀態:</p>
-<ul>
-<li>Begin (開始)</li>
-<li>Check Constraints (確認條件)</li>
-<li>Execution of SQL Queries (執行)</li>
-<li>Commit &#x2F; Rollback (生效或回滾)</li>
-</ul>
-<p>接下來我們在用圖來示範轉帳的案例會讓大家更清楚些，<br>在正常的情況下，因為大明的帳戶有超過 200 塊，所以最後 Transaction 就會 Commit，<br>代表這次所執行的 SQL Queries 都成功，轉帳也會順利轉進各自的帳戶。</p>
-<img src="/2024/01/08/database/acid/transaction-commit.png" class="" title="This is an transaction-commit image">
-
-<p>但假設說今天大明的帳戶沒有超過 200 塊，只有 50 塊，<br>當 Transaction 要執行 Update Account1 的時候就會發生錯誤，<br>因為沒有滿足 Check Constraints (BALANCE &gt; 200)，接下來就會直接執行 Rollback 代表轉帳失敗。</p>
-<img src="/2024/01/08/database/acid/transaction-rollback.png" class="" title="This is an transaction-rollback image">
-
-<p>在了解 Transaction 之後，接著我們來看四大特性，分別是<br>Atomicity、Isolation、Consistency 和 Durablilty。</p>
-<h2 id="Atomicity"><a href="#Atomicity" class="headerlink" title="Atomicity"></a>Atomicity</h2><blockquote>
-<p>Atomicity refers to all or nothing.</p>
-</blockquote>
-<p>所謂的 Atomicity 就是在一個 transaction 中，所有執行的 SQL Queries 要全部成功或全部失敗，<br>也就是說只要有一個 rollback，即便它已經是最後一個執行的 SQL Query，<br>前面所成功的 SQL Queries 也都要 rollback。<br>這邊我們一樣拿轉帳的例子來說明，假設大明的帳戶已經被扣款了，<br>而就在這中間幾秒的時間，DB被強制關閉了，小王的帳戶餘額並沒有增加，<br>如果不遵循 Atomicity，這一百塊就會不見，對於銀行客戶來說就會是一個很嚴重的問題，<br>但如果遵循 Atomicity，DB 做了 rollback，這樣資料就會存在，對我們的影響就是重做一次交易而已。<br>因此 Atomicity 相當重要，一來是能確保資料的一致性，二來是在發生錯誤時，也能夠保護資料不受到影響。</p>
-<img src="/2024/01/08/database/acid/atomicity.png" class="" title="This is an atomicity image">
-
-<h2 id="Isolation"><a href="#Isolation" class="headerlink" title="Isolation"></a>Isolation</h2><p>接下來我們來了解 <code>Isolation</code>，<br>大家先試想看看，假設我們架設了一個電商網站，<br>是不是就會有許多的 User 在同一時間會對商品瀏覽、下單，<br>而這時候網站的前後端就會開始資料交換，而後端就要向 DB 取得資料或異動資料。<br>這就代表 DB 的 Transaction 大多都會是 <code>Concurrent</code>（並行），<br>在這樣的狀況下，一個 transaction 被另一個 transaction 影響後所產生的現象，<br>我們就會稱作 <code>Read Phenomena</code>。<br>而要解決 <code>Read Phenomena</code> 的問題，<br>就要使用 <code>Isolation Level</code> 來確保資料的正確性和一致性，<br>讓 transaction 不會受到 <code>Concurrent</code> 的影響，獨立的執行 SQL Queries。</p>
-<h3 id="Read-Phenomena"><a href="#Read-Phenomena" class="headerlink" title="Read Phenomena"></a>Read Phenomena</h3><p>在 Read Phenomena 中，有四種現象分別是 Dirty Read、Non-repeatable Read、Phantom Read 和 Lost Update。</p>
-<h4 id="Dirty-Read"><a href="#Dirty-Read" class="headerlink" title="Dirty Read"></a>Dirty Read</h4><p>當我們在一個 Transaction 中，查詢到其它 Transaction 尚未 Commit 的資料異動，<br>在還沒 Commit 之前，這種資料異動都屬於髒資料，代表還未生效，這種現象就會稱為 <code>Dirty Read</code>。<br>這邊我們用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>在執行第二次之前，TX2 會先改變產品1的銷售數量，藉而影響 TX1 的第二次查詢結果，<br>如果 TX2 並沒有 Commit 而是 Rollback，那 TX1 所產生的資料就是錯誤的。</p>
-<img src="/2024/01/08/database/acid/dirty-read.png" class="" title="This is an dirty read image">
-
-<h4 id="Non-repeatable-Read"><a href="#Non-repeatable-Read" class="headerlink" title="Non-repeatable Read"></a>Non-repeatable Read</h4><p>在一個 transaction 中對同一筆資料做了兩次查詢，而查詢結果卻不相同，<br>這是因為受到另一個 transaction 對相同的資料做 Commit 讓同筆資料異動生效，<br>而這就是 <code>Non-repeatable Read</code> 的現象。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>在執行第二次之前，TX2 會先改變產品1的銷售數量且 <code>Commit</code>，藉而影響 TX1 的第二次查詢結果。</p>
-<img src="/2024/01/08/database/acid/non-repeatable-read.png" class="" title="This is an non-repeatable read image">
-
-<h4 id="Phantom-Read"><a href="#Phantom-Read" class="headerlink" title="Phantom Read"></a>Phantom Read</h4><p>在一個 transaction 中對相同資料做了兩次範圍的查詢，而查詢結果卻不相同，<br>這是因為受到另一個 transaction 對相同資料做了新增或刪除並且 Commit，<br>而這就是 <code>Phantom Read</code> 的現象。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會執行兩次 Select 指令，<br>而這兩個指令都是 <code>ragne query</code>。<br>在執行第二次之前，TX2 會先新增產品3且 <code>Commit</code>，藉而影響 TX1 的第二次查詢結果。<br>Phantom Read 和 Non-repeatable Read 的差別就在於：<br>Phantom Read 通常是發生在資料表有被新增或刪除，<br>而 Non-repeatable Read 則是同筆資料有被異動的情況下發生。</p>
-<img src="/2024/01/08/database/acid/phantom-read.png" class="" title="This is an phantom read image">
-
-<h4 id="Lost-Update"><a href="#Lost-Update" class="headerlink" title="Lost Update"></a>Lost Update</h4><p>在一個 transaction 中，我們先對一筆資料做異動，<br>然而另一個 transaction 也同時對同筆資料做異動且 Commit，<br>這個就會導致第一個 transaction 在查詢同筆資料時，<br>得到的結果不是自身 transaction 所異動的資料，而這就是 <code>Lost Update</code>。<br>這邊我們一樣用兩個 transaction 來解釋這個現象，<br>假設我們有一個產品銷售的資料表，首先 TX1 會先對產品2執行一次 Update 指令，<br>接下來 TX2 同時對產品2也執行 Update 指令且 <code>Commit</code>，<br>藉而就影響 TX1 的第二次查詢，銷售總額不是 TX1 調整數量的結果。</p>
-<img src="/2024/01/08/database/acid/lost-update.png" class="" title="This is an lost update image">
-
-<h3 id="Isolation-Level"><a href="#Isolation-Level" class="headerlink" title="Isolation Level"></a>Isolation Level</h3><p>前面我們說明了四種在 transaction 並行會發生的現象，<br>也了解到每一種現象發生時可能都會導致資料不一致或資料遺失的狀況，<br>這個絕對是我們需要去避免的，<br>因此資料庫會使用 <code>Isolation Level</code> 來解決 <code>Read Phenomena</code>。</p>
-<p>下圖取自維基百科，這張表格完美了詮釋各個 Isolation level 解決了哪些現象，</p>
-<img src="/2024/01/08/database/acid/isolation-levels.png" class="" title="This is an isolation levels image">
-
-<ul>
-<li><p>Read Uncommitted</p>
-<p>在 transaction 執行期間，可以拿到其他 transaction 尚未 commit 的資料，<br>而這就無法避免發生 <code>Dirty Read</code> </p>
-</li>
-<li><p>Read Committed</p>
-<p>在 transaction 執行期間，可以拿到其他 transaction commit 後的結果，<br>但前面提到的 <code>Non-repeatable Read</code> 或 <code>Lost Update</code> 就有可能發生。<br>另外大多的資料庫都會使用這個作為預設的 Isolation Level</p>
-</li>
-<li><p>Repeatable Read</p>
-<p>當 transaction 開始執行時，如有資料被讀取到，資料庫就會將其鎖住，避免其他 transaction 對同筆資料做異動，而這就不會發生 <code>Non-repeatable Read</code> 和 <code>Lost Update</code></p>
-</li>
-<li><p>Serializable</p>
-<p>前面提到的 <code>Repeatable Read</code> 可能只是鎖住單個 Row，<br>但如果遇到資料表被新增或刪除時，還是無法避免 <code>Phantom Read</code>。<br>因此 Serializable 可以針對單個 Row 、範圍性的 Query 或是整張表給上鎖，<br>當 transaction 執行期間，其他 transaction 必須等到鎖釋放後才能異動資料。<br>在這種情況下，資料雖然最安全，但效能也相對差勁，因此不太常被使用</p>
-</li>
-</ul>
-<p>最後有一個重點要注意，就是不同的資料庫在 <code>Isolation Level</code> 所使用的機制不盡相同，<br>像 Postgres 在 <code>Repeatable Read</code> 就使用了 <code>Snapshot</code> 的機制，<br><code>Snapshot</code> 是指當 transaction 開始執行前，會將要查詢的資料做一個快照，<br>而快照在執行期間不會有變動，因此就不會發生 <code>Phantom Read</code> 的現象。<br>所以在使用 <code>Isolation level</code> 時，記得要考慮到資料庫的特性。</p>
-<h2 id="Consistency"><a href="#Consistency" class="headerlink" title="Consistency"></a>Consistency</h2><p>接下來我們要來介紹 <code>Consistency</code>，<br>所謂的 Consistency 就是在 transaction 執行時，資料庫要確保資料是符合 <code>Constraint</code> (限制條件)，<br>藉此讓資料維持一致性和正確性。<br>常見的 <code>Constraint</code> 大概有這幾種：</p>
-<ul>
-<li><p>Data Type</p>
-<p>資料必須符合 Schema 所規範的資料型別</p>
-</li>
-<li><p>Range </p>
-<p>在前面帳戶轉帳的例子，我們確認帳戶在轉帳前是否有超過兩百塊，<br>這一種就算是 <code>Range Constraint</code></p>
-</li>
-<li><p>Uniqueness</p>
-<p>唯一性，代表該鍵值在整張資料表中只能被一筆資料所擁有</p>
-</li>
-<li><p>Referential Integrity</p>
-<p>當兩張 table 要建立關聯時，我們會使用 foreign key 去建立兩張表的關係。<br>這邊可以舉一個例子，在餐廳裡，我們可能會有客戶和訂單的資料表，那客戶中就會存放客戶ID、聯絡資訊和姓名等等，<br>至於訂單一定是有客戶才會產生的，因此我們會在訂單的資料表設定客戶ID作為訂單的 FK。<br>接下來假設我們要新增訂單的資料時，他就會確認訂單的客戶ID是否有出現在客戶的資料表，<br>如果沒有就代表客戶不存在，這筆訂單就會建立失敗，<br>反之，如果我們要刪除客戶的資料時，也必須確認訂單中都沒有這個客戶ID。</p>
-</li>
-</ul>
-<h2 id="Durability"><a href="#Durability" class="headerlink" title="Durability"></a>Durability</h2><p>前面提到的 <code>Atomicity</code>、<code>Isolation</code> 和 <code>Consistency</code> 基本上都是確保 trsanction 執行期間的正確性，<br>那最後要提到 <code>Durability</code> 則是要確保當 transaction commit 後，<br>資料的狀態就會是 <code>persistent</code>，並且必須存進 <code>non volatile</code> 的儲存位置，像是硬碟，<br>即使遇到關機或錯誤等狀況，資料也都要能還原再儲存。<br>而通常資料庫會使用 <code>WAL</code>(Write-Ahead Logging)的機制來確保 <code>Durablilty</code>，<br>也就是說每筆資料的異動一定都會先寫下 Log，<br>因此即便在 transaction commit 後，資料的異動尚未 <code>flushing</code> 到儲存位置(硬碟)時，<br>這時候如果 DB 突然被關閉了，還是能透過 Log 來進行還原，藉此確保了 <code>Durablilty</code>。</p>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在本文中，我們先說明了何謂是 transaction，因為可以看到 ACID 每一個特性都和 transaction 有關，<br>所以必須先理解 transaction 再來談四個特性。<br>Atomicity 確保 transaction 的 SQL Queries 必須全部成功或全部失敗，<br>而 Isolation 則是確保 transaction 的獨立性，避免受到並行 transaction 的影響導致資料不一致或遺失，<br>再來 Consistency 則透過條件限制 transaction 的執行，確保資料的一致性和正確性，<br>最後 Durablity 則是確保 transaction commit 後，資料必須存入不受電力影響的儲存位置像是硬碟，<br>並且在遇到關機或錯誤等狀況時，也會有 WAL 的機制讓資料可以還原並儲存。<br>總結來說，在資料庫中 ACID 是非常重要的概念，也是關聯式資料庫運作時所遵循的原理。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/08/database/acid/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -552,9 +393,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">發表於</span>
-      
 
-      <time title="創建時間：2024-01-08 15:20:55 / 修改時間：20:40:58" itemprop="dateCreated datePublished" datetime="2024-01-08T15:20:55+08:00">2024-01-08</time>
+      <time title="創建時間：2024-01-08 15:20:55" itemprop="dateCreated datePublished" datetime="2024-01-08T15:20:55+08:00">2024-01-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新於</span>
+      <time title="修改時間：2024-02-10 09:42:59" itemprop="dateModified" datetime="2024-02-10T09:42:59+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -562,7 +409,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Microservice/" itemprop="url" rel="index"><span itemprop="name">Microservice</span></a>
+          <a href="/categories/Microservices/" itemprop="url" rel="index"><span itemprop="name">Microservices</span></a>
         </span>
     </span>
 
@@ -577,32 +424,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章首先從思考問題出發，探討為甚麼我們需要在微服務中使用共用函式庫，<br>以及使用共用函式庫的優缺點，最後則說明設計時可以遵循的 Best Practices。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>為甚麼要設計共用函式庫</li>
-<li>使用共用函式庫的優點和缺點</li>
-<li>設計共用函式庫的 Best Practices</li>
-</ul>
-<h2 id="為甚麼要設計共用函式庫"><a href="#為甚麼要設計共用函式庫" class="headerlink" title="為甚麼要設計共用函式庫"></a>為甚麼要設計共用函式庫</h2><p>在微服務的架構當中，我們會將一個系統切分成好幾顆服務，<br>以電商系統為例，我們可能就會切分成訂單、庫存和交易等服務，<br>而在撰寫這些服務時會出現通用的功能，像是日誌。<br>如果每一顆服務都要額外去寫日誌功能，就會違反 <code>DRY(Don&#39;t Repeat Yourself)</code> 的精神，<br>也會讓各團隊出現重工的情況，浪費了大量的時間成本。<br>透過設計這些微服務會使用到的共用函式庫，讓多顆服務可以複用，<br>一來確保程式碼不會重複，二來也能保持服務使用第三方套件的一致性。<br>藉此來加快團隊的開發效率。</p>
-<h2 id="使用共用函式庫的優點和缺點"><a href="#使用共用函式庫的優點和缺點" class="headerlink" title="使用共用函式庫的優點和缺點"></a>使用共用函式庫的優點和缺點</h2><h3 id="優點"><a href="#優點" class="headerlink" title="優點"></a>優點</h3><ul>
-<li>不會出現重複的程式碼</li>
-<li>減少團隊間的重工，避免浪費人力和時間成本</li>
-<li>各服務能保持對第三方套件的一致性，避免發生版本間的衝突</li>
-<li>當有 <code>Bug</code> 出現時，只需要修改共用函式庫；不需要手動改每一顆服務</li>
-</ul>
-<h3 id="缺點"><a href="#缺點" class="headerlink" title="缺點"></a>缺點</h3><ul>
-<li>過於依賴共用函式庫，會導致各服務之間的耦合度增加</li>
-<li>當共用函式庫更新時，所有服務可能都會需要同步調整版本和程式碼</li>
-</ul>
-<h2 id="設計共用函式庫的-Best-Practices"><a href="#設計共用函式庫的-Best-Practices" class="headerlink" title="設計共用函式庫的 Best Practices"></a>設計共用函式庫的 Best Practices</h2><p>在設計共用函式庫時，有一些 Best Practices 可以遵循:</p>
-<ul>
-<li>弄清楚共用函式庫的需求和功能，讓其符合單一責任的原則避免多餘的程式碼</li>
-<li>設計時要專注在功能上，但與服務的耦合度要低，這樣共用函式庫改動時就能減少對服務的影響</li>
-<li>在共用函式庫中多使用介面去增加配置的靈活性，一是方便函式庫的擴展，二是讓服務也能客製函式庫的功能</li>
-<li>共用函式庫要能讓團隊簡易使用和上手，減少學習的時間成本</li>
-<li>更新函式庫應考慮兼容性，避免服務因函式庫的影響而改動程式碼</li>
-</ul>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在微服務中設計共用函式庫，其主要目的就是為了讓各服務能更專注於自身的商業邏輯，<br>一是減少程式碼重複的現象，二是確保服務使用第三方套件一致性。<br>但在設計共用函式庫就必須考慮和服務的耦合度，將改動的影響最小化，<br>避免服務因為函式庫的更新而調整，反而增加團隊的時間成本和溝通成本。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/08/microservice/shared-libraries/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -664,7 +493,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:47:01" itemprop="dateModified" datetime="2024-02-10T09:47:01+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -672,7 +501,7 @@
       </span>
       <span class="post-meta-item-text">分類於</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Microservice/" itemprop="url" rel="index"><span itemprop="name">Microservice</span></a>
+          <a href="/categories/Microservices/" itemprop="url" rel="index"><span itemprop="name">Microservices</span></a>
         </span>
     </span>
 
@@ -687,38 +516,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇文章會先說明同步和非同步的差別，接著在解釋在微服務中使用非同步的優勢，<br>最後則簡單介紹非同步的通訊協定，像是 AMQP。 </p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>甚麼是同步和非同步</li>
-<li>在微服務中使用非同步的優勢</li>
-<li>Advanced Message Queuing Protocol (AMQP)</li>
-</ul>
-<h2 id="甚麼是同步和非同步"><a href="#甚麼是同步和非同步" class="headerlink" title="甚麼是同步和非同步"></a>甚麼是同步和非同步</h2><p>以往有接觸過 Web Service 的朋友，應該都對同步和非同步的概念並不陌生，<br>這邊我們舉一個例子來說明同步和非同步的差別，<br>假設在電商系統中，我們有兩個服務分別是訂單和庫存，<br>訂單服務接收到前端建立訂單的 HTTP 請求，當訂單成立時，我們需要去減少庫存的商品數量，<br>這時候訂單服務會再發送 HTTP 請求給庫存服務，庫存對資料庫操作後再回應給訂單服務，<br>訂單服務再回應給前端表示建立訂單成功，這個資料流程就會為<code>同步</code>。<br>透過下方的圖示可以看到訂單和庫存服務已經耦合在一起，並且前端接收到回應時間也會被拉長。</p>
-<img src="/2024/01/05/microservice/async-communication/sync.png" class="" title="This is an sync image">
-
-<p>所以我們可以使用非同步的機制來將服務間的關係解耦並且減少回應時間，<br>透過 Message Broker 建立生產者和消費者的 Pattern，<br>生產者可以持續將訊息放入到 Message Broker，再由消費者透過訂閱的方式向 Message Broker 取得訊息在進行處理，這種資料流程就會為<code>非同步</code>。</p>
-<img src="/2024/01/05/microservice/async-communication/async.png" class="" title="This is an async image">
-
-<h2 id="在微服務中使用非同步的優勢"><a href="#在微服務中使用非同步的優勢" class="headerlink" title="在微服務中使用非同步的優勢"></a>在微服務中使用非同步的優勢</h2><p>那為甚麼我們需要在微服務中使用非同步的機制呢?<br>其實從前面的例子可以了解到幾個優勢:</p>
-<ul>
-<li><p>解耦服務之間的依賴關係</p>
-<p>假設我們使用同步的方式處理資料，就會遇到當庫存服務改變 API 的 URL 時，連帶就會影響到訂單服務；使用非同步能減少服務間的直接依賴</p>
-</li>
-<li><p>增加效能</p>
-<p>因服務間的資料流不會被同步所阻塞，所以回應時間就會與之降低，增加系統的效能</p>
-</li>
-<li><p>容錯率變高</p>
-<p>因服務之間不會直接依賴，所以當庫存服務壞掉時並不會影響到訂單服務的流程，所造成的影響可能只是 Message Broker 的 Queue 會儲存大量的訊息</p>
-</li>
-</ul>
-<p>因為這些優勢，所以在微服務的架構中都會設計非同步的資料流和 Message Broker 的角色。</p>
-<h2 id="Advanced-Message-Queuing-Protocol-AMQP"><a href="#Advanced-Message-Queuing-Protocol-AMQP" class="headerlink" title="Advanced Message Queuing Protocol (AMQP)"></a>Advanced Message Queuing Protocol (AMQP)</h2><p>在微服務的架構中，通常我們會使用 AMQP 作為非同步的通訊協定，<br>AMQP 也和 HTTP 一樣，屬於 OSI 中的 Applicaion Layer，<br>通常會被 Message-Oriented 的 Middleware 所使用，用來和服務做資料交換。<br>而使用 AMQP 的 Middleware 主要有兩個，分別是 RabbitMQ 和 ActiveMQ。</p>
-<p>當然在微服務中也會使用其他的 Middleware 像是 Apache Kafka、Amazon SQS 和 Google Pub&#x2F;Sub，這些都沒有支援 AMQP，但一樣能達到非同步的目的和取得它的優勢。</p>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>透過這篇文章的說明，可以了解到非同步機制的設計在微服務中不可或缺，<br>對此有興趣的讀者可以在深入了解 AMQP 的原理和 middleware 的使用方法，<br>像是 RabbitMQ 的官方文件就相當完整，在參閱後就能簡單建立出具有非同步機制的服務。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.rabbitmq.com/">RabbitMQ</a></li>
-<li><a target="_blank" rel="noopener" href="https://medium.com/design-microservices-architecture-with-patterns/microservices-asynchronous-message-based-communication-6643bee06123">Microservices Asynchronous Message-Based Communication</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/05/microservice/async-communication/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -780,7 +585,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:13" itemprop="dateModified" datetime="2024-02-10T09:41:13+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -803,42 +608,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>一談到錯誤處理，大家可能都會想到 <code>try-catch</code> 和 Exception，<br>但在 Golang 的世界卻不是這樣運作的，Golang 只有 Error 並沒有 Exception，也沒有 <code>try-catch</code> 只有 if。<br>本篇文章就要來介紹 Golang 的錯誤處理，像是如何判斷和處理 Error，還有建立客製的 Error。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Build-In Error</li>
-<li>建立客製的錯誤</li>
-</ul>
-<h2 id="Built-In-Error"><a href="#Built-In-Error" class="headerlink" title="Built-In Error"></a>Built-In Error</h2><p>首先我們先來了解 Golang 提供的 errors package，<br>這一個 package 就是所謂的標準函式庫，它是由 Golang 官方所撰寫的 package。</p>
-<blockquote>
-<p><a href="htt%EF%BD%80s://cs.opensource.google/go/go/+/refs/tags/go1.21.5:src/errors/errors.go;l=61"> errors 標準函式庫</a></p>
-</blockquote>
-<p>這邊我們先來看 type <code>error</code>，可以看到它是一個 interface，這代表只要有宣告 <code>Error</code> 方法的 struct，<br>就會 <code>implicitly</code> 引用了 <code>error</code> interface。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="type">error</span> <span class="keyword">interface</span> &#123;</span><br><span class="line">    Error() <span class="type">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>所以我們就來看 Golang 在 <code>errors</code> package 中引用 <code>error</code> 的方式，可以看到 <code>errorString</code> 這個 strcut 在宣告 Error 的方法時，就代表它 <code>implicitly</code> 引用了 <code>error</code> interface。<br>但因為這一個 struct 並沒有 export，因此我們會使用 <code>errors.New</code> 方法來建立 error。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> errorString <span class="keyword">struct</span> &#123;</span><br><span class="line">    s <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *errorString)</span></span> Error() <span class="type">string</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> e.s</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">(text <span class="type">string</span>)</span></span> <span class="type">error</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> &amp;errorString&#123;text&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>這邊我們來看一個例子，<br>假設前端有一個關於表單的請求送過來到後端，後端要驗證申請人的年齡是否超過18歲，<br>如果沒有超過，後端就要拋出 error。<br>而在下方的程式碼中，我們只要使用 <code>errors.New</code> 來建立 error，<br>在使用 <code>if</code> 來判斷這次函式是否有錯誤就好，寫起來非常簡單。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	age := <span class="number">16</span></span><br><span class="line"></span><br><span class="line">	_, err := validAge(age)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;年齡符合標準&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">validAge</span><span class="params">(age <span class="type">int</span>)</span></span> (<span class="type">bool</span>, <span class="type">error</span>) &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> age &lt; <span class="number">18</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, errors.New(<span class="string">&quot;年齡不符合，沒有超過 18 歲&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/wYFufAgGPs7">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>除了 <code>errors.New</code> 之外，我們也可以使用 <code>fmt.Errorf</code> 來建立錯誤，<br>在大多數的場景中，<code>fmt.Errorf</code> 應該都可以滿足需求。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> age &lt; <span class="number">18</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">false</span>, fmt.Errorf(<span class="string">&quot;年齡 %v 不符合，沒有超過 18 歲&quot;</span>, age)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="建立客製的錯誤"><a href="#建立客製的錯誤" class="headerlink" title="建立客製的錯誤"></a>建立客製的錯誤</h2><p>前面我們提到了如何使用 <code>errors.New</code> 建立 error，<br>但在某些情況下，我們可能會需要 error 能擁有更多的資訊，又或者是能依據 type 來判斷不同的錯誤發生時來做相對應的處理。<br>在大型系統中，通常錯誤訊息都會伴隨者錯誤代碼，因此我們就可以建立一個 struct 來包含這兩個資訊，<br>並且在判斷錯誤時，還能依據 type 來決定是由系統拋出或是意料之外的錯誤發生。</p>
-<p>這邊我們一樣改寫前面的例子，我們將 <code>errors.New</code> 改成我們所客製的錯誤，<br>並且可以看到在判斷錯誤的區塊，使用 <code>switch e := err.(type)</code> 就能依據不同的錯誤類型來進行處理，<br>這在大型系統中是很常使用到的。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> CustomError <span class="keyword">struct</span> &#123;</span><br><span class="line">	code <span class="type">string</span></span><br><span class="line">	msg  <span class="type">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *CustomError)</span></span> Error() <span class="type">string</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> fmt.Sprintf(<span class="string">&quot;Code : %s, Msg: %s&quot;</span>, c.code, c.msg)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	age := <span class="number">16</span></span><br><span class="line"></span><br><span class="line">	_, err := validAge(age)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">switch</span> e := err.(<span class="keyword">type</span>) &#123;</span><br><span class="line">		<span class="keyword">case</span> *CustomError:</span><br><span class="line">			fmt.Println(<span class="string">&quot;The error is &quot;</span>, e)</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			fmt.Println(<span class="string">&quot;Not expected: &quot;</span>, e)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fmt.Println(<span class="string">&quot;年齡符合標準&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">validAge</span><span class="params">(age <span class="type">int</span>)</span></span> (<span class="type">bool</span>, <span class="type">error</span>) &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> age &lt; <span class="number">18</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, &amp;CustomError&#123;code: <span class="string">&quot;857&quot;</span>, msg: <span class="string">&quot;年齡不符合，沒有超過 18 歲&quot;</span>&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/JE_OP6Izb2a">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在本篇文章中，我們介紹了 Golang 的錯誤處理機制，並且也說明了如何建立客製的錯誤。<br>另外在這個過程中，我們也更了解到 interface 的運用，<br>當 sturct 宣告 error interface 的 <code>Error</code> 方法時，就代表它已經 <code>implicitly</code> 引用了 <code>error</code> interface，<br>不像其他的程式語言還需要寫上 <code>implement</code> 的關鍵字。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://go.dev/blog/error-handling-and-go">Error handling and Go</a></li>
-<li><a target="_blank" rel="noopener" href="https://go.dev/blog/defer-panic-and-recover">Defer, Panic, and Recover</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/01/05/golang/error-handling/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -900,7 +677,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:42:01" itemprop="dateModified" datetime="2024-02-10T09:42:01+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -923,94 +700,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在這篇文章中，我們主要會介紹 GoRoutine 和 Channel 的基礎概念，<br>再來解釋 Unbuffered 和 Buffered 的差別和說明 Directional Channel 的用法和意義，<br>最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料和使用 Select 應對多個 Channel。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>GoRoutine</li>
-<li>Channel</li>
-<li>Buffered and Unbuffered Channel</li>
-<li>Directional Channel</li>
-<li>Range Close</li>
-<li>Select</li>
-</ul>
-<h2 id="GoRoutine"><a href="#GoRoutine" class="headerlink" title="GoRoutine"></a>GoRoutine</h2><p>GoRoutine 基本上可以說是 Go Concurrency 的基礎之一，所以要學會使用和理解它的概念，<br>才能活用 Go 的 Concurrency Patteren，否則在開發上就會遇到無數的瓶頸和意想不到的 Bug。<br>這邊來說明三個 GoRoutine 的特點：</p>
-<ul>
-<li><p>輕量化</p>
-<p>相較於 Thread 所使用的記憶體和啟動時間，GoRoutine 所使用的資源比例都遠低於 Thread，可以說 GoRoutine 就是輕量化的 Thread</p>
-</li>
-<li><p>抽象化</p>
-<p>當我們使用 GoRoutine 時不用考慮到 OS 層級，因為 Go Runtime 會幫你管理 GoRoutine 和 OS Thread 之間的協作、溝通</p>
-</li>
-<li><p>簡單上手</p>
-<p>建立 GoRoutine 只需要在函式或方法前加上 <code>go</code> 的關鍵字，就能簡單地寫出 Concurrency 的程式碼</p>
-</li>
-</ul>
-<p>接下來我們來實作 GoRoutine，<br>當我們還未加上 <code>go</code> 關鍵字在方法前代表程式碼會同步執行，<br>輸出的結果就會為 <code>Hello World</code></p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	printHello()</span><br><span class="line"></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/NEfVpFNxYob">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>但如果我們加上了 <code>go</code> 關鍵字在 <code>printHello</code> 的前方時，此時的程式碼就會變成非同步，但執行結果會只出現 <code>World</code>，這是因為 Main GoRoutine 並不會等待 Sub GoRoutine 執行後才結束，因此我們要使用 sync.WaitGroup 讓 Main GoRoutine 等待 Sub GoRoutine 執行完。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> printHello()</span><br><span class="line"></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/9jvkpIXuQo5">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> printHello(&amp;wg)</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">(wg *sync.WaitGroup)</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">&quot;Hello &quot;</span>)</span><br><span class="line">	wg.Done()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/JoKGoSzkot8">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Channel"><a href="#Channel" class="headerlink" title="Channel"></a>Channel</h2><p>從前面 GoRoutine 的介紹中，我們可以知道 GoRoutine 是用來負責執行並發的任務，<br>而在任務之間，我們會使用 Channel 來交換資料、協調任務之間的順序和引入 Concurrency Pattern。<br>舉個例子來說，假設我們有一個共享變數 (<code>counter</code>) 需要被多個 GoRoutine 增加時，<br>就可以使用 Channel，同時也避免 Race Condition 的發生。</p>
-<p>這邊我們來延續上面的程式碼實作 Channel，<br>可以看到程式碼拿掉了 sync.WaitGroup，但輸出的結果沒有變，一樣會是 <code>Hello World</code>。<br>這是因為 <code>Channel Block</code> 的關係，也就是說當我們使用 Channel 在 GoRoutine 之間傳遞或接收資料時，<br>會發生阻塞的現象，以下面的程式碼來說，Main GoRoutine 會等 <code>&lt;-c</code> 接收到資料之後才往下執行。</p>
-<p>執行流程：</p>
-<ol>
-<li>Main GoRoutine 建立 Channel 並啟動 sendHello GoRoutine</li>
-<li>Main GoRoutine 執行到 <code>fmt.Print(&lt;-c)</code> 會發生阻塞，等待 Channel 傳送資料</li>
-<li>sendHello GoRoutine 執行並將 “Hello “ 發送到 Channel </li>
-<li>Main GoRoutine 從 Channel 中接收 “Hello “，解除阻塞並印出它。</li>
-<li>Main GoRoutine 印出 “World”。</li>
-</ol>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> sendHello(c)</span><br><span class="line"></span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/B3rQDBjHtVo">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Unbuffered-and-Buffered-Channel"><a href="#Unbuffered-and-Buffered-Channel" class="headerlink" title="Unbuffered and Buffered Channel"></a>Unbuffered and Buffered Channel</h2><p>前面說明了 Channel 可以讓 GoRoutine 之間交換資料和達成同步，<br>而 Channel 儲存資料的容量又可以分為 Unbuffered 和 Buffered。<br>Unbuffered 的例子就是我們前面所使用的程式碼 <code>c := make(chan string)</code>，<br>代表這個 Channel 沒有容量可以存放，當 sendHello GoRoutine 要執行傳遞資料時，<br>Main GoRoutine 必須準備接收，否則傳遞就會被 <code>Blocked</code>，發生阻塞的現象。</p>
-<p>而在某些情況下，我們會希望降低阻塞現象的發生，像是在日誌系統中可以有生產者和消費者的角色，<br>生產者負責產生及傳遞日誌資料給 Channel，而消費者則負責從 Channel 接收日誌資料寫入到檔案，<br>因為日誌的資訊是非常重要的，所以我們需要生產者能持續產生，<br>因此不希望生產者發生阻塞現象，此時就可以使用 Buffer Channel，<br>代表這個 Channel 在未達到最大容量前都不會被 <code>Blocked</code>。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>, <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> sendHello(c)</span><br><span class="line"></span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/Ut-NE1oKkoi">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Directional-Channel"><a href="#Directional-Channel" class="headerlink" title="Directional Channel"></a>Directional Channel</h2><p>接下來要提到的是 Channel 可以依據行為來劃分 Directional Channel，<br>也就是我們先前提到的傳遞(Send)和接收(Receive)的行為，這兩個就分別代表了不同的資料流向，<br>使用 Directional Channel 可以確保程式碼更加簡潔和增加可讀性，也能讓單一函式的責任劃分明確，<br>並且還能導入一些常用的 Concurrency Pattern，後面文章會再做更詳細的介紹。</p>
-<p>Directional Channel: </p>
-<ul>
-<li>傳遞(Send) : chan&lt;- Type</li>
-<li>接收(Receive) : &lt;-chan Type</li>
-</ul>
-<p>這邊我們就來實作 Directional Channel，<br>在下面的程式碼中，我們多增加一個 printHello GoRoutine 代表只能從 Channel 接收資料，<br>而 sendHello GoRoutine 則代表只能傳送資料到 Channel。<br>如果我們在 printHello 也使用 <code>c &lt;- &quot;Hello &quot;</code> 就會執行失敗，<br>Compiler 就會顯示「invalid operation: cannot send to receive-only channel c (variable of type &lt;-chan string)」<br>來確保 printHello GoRoutine 只能從 Channel 接收資料。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		sendHello(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		printHello(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait() <span class="comment">// 確保 Main GoRoutine 會等待 Sub Routine 結束</span></span><br><span class="line">	fmt.Print(<span class="string">&quot;World&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sendHello</span><span class="params">(c <span class="keyword">chan</span>&lt;- <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	c &lt;- <span class="string">&quot;Hello &quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printHello</span><span class="params">(c &lt;-<span class="keyword">chan</span> <span class="type">string</span>)</span></span> &#123;</span><br><span class="line">	fmt.Print(&lt;-c)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/03JNDoM6OU-">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Range-Close"><a href="#Range-Close" class="headerlink" title="Range Close"></a>Range Close</h2><p>那在前面的程式碼，我們都是使用單筆資料來實作，<br>但在實際場景中，其實大多都會是多筆資料，像是生產者與消費者的案例，<br>消費者需要持續接收資料，而在這個情況下，我們就可以使用 Range 讓消費者持續從 Channel 接收。<br>另外很重要的一點是我們需要關注消費者何時停止接收，避免發生 deadlock 或 GoRoutine leak，<br>這時候就要在生產者使用 <code>close</code> 來發出訊號讓消費者知道要停止接收。</p>
-<p>在下面的程式碼中，我們使用的是 Unbuffered Channel，<br>代表 Channel 沒有容量，生產者傳遞資料時必須等待消費者準備接收才行，<br>因此下方的流程就會是當生產者每傳遞一筆資料到 Channel，消費者也會同時從 Channel 取出並打印，<br>直到生產者使用 <code>close</code>，消費者才停止接收。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		produce(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		consume(c)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;about to exit&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">produce</span><span class="params">(c <span class="keyword">chan</span>&lt;- <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">5</span>; i++ &#123;</span><br><span class="line">		c &lt;- i</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">close</span>(c) <span class="comment">// 通知消費者停止接收，可以嘗試將這行拿掉，看會出現什麼訊息</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">consume</span><span class="params">(c &lt;-<span class="keyword">chan</span> <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> c &#123;</span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/leKm3wMh_v0">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Select"><a href="#Select" class="headerlink" title="Select"></a>Select</h2><p>在前面我們都是使用單個 Channel 來演示，<br>但在某些情況下，我們會需要接收多個 Channel 的資料，<br>這時候就可以透過 <code>select</code> 來決定對不同 Channel 的資料做處理。</p>
-<p>下面的程式碼，我們使用奇偶數的例子來模擬多個 Channel 的處理。<br>此外當生產者結束迴圈後，我們會再透過一個 Channel 來發送停止訊號，讓消費者停止接收。<br>當然 <code>select</code> 也可以獨立使用，不一定要和 for 搭配使用。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	odd := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line">	even := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line">	quit := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="type">int</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		produce(odd, even, quit)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		consume(odd, even, quit)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Print(<span class="string">&quot;about to exit&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">produce</span><span class="params">(odd, even, quit <span class="keyword">chan</span>&lt;- <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">1</span>; i &lt;= <span class="number">10</span>; i++ &#123;</span><br><span class="line">		<span class="keyword">if</span> i%<span class="number">2</span> == <span class="number">0</span> &#123;</span><br><span class="line">			even &lt;- i</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			odd &lt;- i</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	quit &lt;- <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">consume</span><span class="params">(odd, even, quit &lt;-<span class="keyword">chan</span> <span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-odd:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Odd Channel:&quot;</span>, v)</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-even:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Even Channel:&quot;</span>, v)</span><br><span class="line">		<span class="keyword">case</span> v := &lt;-quit:</span><br><span class="line">			fmt.Println(<span class="string">&quot;From Quit Channel:&quot;</span>, v)</span><br><span class="line">			<span class="keyword">return</span> <span class="comment">// 結束無窮迴圈</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/5E-XnxS4IdH">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在這篇文章中，我們先介紹了 GoRoutine 和 Channel 的基礎概念，<br>再來說明了 Unbuffered 和 Buffered 的差別和 Directional Channel 的用法及其意義，<br>最後則說明如何使用 Range Close 處理單個 Channel 的多筆資料以及使用 Select 應對多個 Channel。<br>在後續的文章中，我們會在介紹 Go 的 Concurrency Pattern 像是 Fan-In、Fan-Out、Worker-Pool 和 Pipeline，<br>還有 Go 的 Context。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/a/39831976">What are channels used for?</a><br><a target="_blank" rel="noopener" href="https://divan.dev/posts/go_concurrency_visualize/">Visualizing Concurrency in Go</a></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/30/golang/channel/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1072,7 +769,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:17" itemprop="dateModified" datetime="2024-02-10T09:41:17+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1095,80 +792,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>相信很多人在學習 GO 以前，都知道 GO 在處理並發時相對其他程式語言具有優勢，<br>我們能使用 GoRoutine(輕量化的Thread) 搭配 Channel 來處理並發，而且撰寫上也相對簡單。<br>因此這篇文章首先會介紹 Concurrency 的概念，再來說明如何使用 WaitGroup 來處理並發，<br>並且透過 Mutex 和 Atomic 來處理並發產生的 Race Condition，<br>至於 Channel 則會在未來的文章會與大家做介紹。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Concurrency </li>
-<li>WaitGroup</li>
-<li>Race Condition<ul>
-<li>Mutex</li>
-<li>Atomic</li>
-</ul>
-</li>
-</ul>
-<h2 id="Concurrency"><a href="#Concurrency" class="headerlink" title="Concurrency"></a>Concurrency</h2><blockquote>
-<p>Concurrency is not parallelism.</p>
-</blockquote>
-<p>這句話是 Rob Pike 在 <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=oV9rvDllKEg&ab_channel=gnbitcom">Concurrency is not Parallelism</a> 的影片中對 Concurrency 和 Parallelism 的解釋，非常建議讀者們可以看這部影片，有助於對 Concurrency 概念有更深入的理解。</p>
-<p>接下來我們就來透過例子來了解什麼是 Parallelism 和 Concurrency，<br>這個例子是量販商的工作人員正在透過推車將電商貨品搬到貨車上。</p>
-<h3 id="Parallelism"><a href="#Parallelism" class="headerlink" title="Parallelism"></a>Parallelism</h3><img src="/2023/12/23/golang/concurrency/original.png" class="" title="This is an original image">
-
-<p>假設到了過年期間，貨量突然暴增，店長覺得這樣出貨的速度太慢，<br>因此他決定多加一個出貨站、一位工作人員和一台貨車，<br>藉此平行化的處理同一件事讓出貨效能變好，這就是 Parallelism 。</p>
-<img src="/2023/12/23/golang/concurrency/parallelism.png" class="" title="This is an parallelism image">
-
-
-<h3 id="Concurrency-1"><a href="#Concurrency-1" class="headerlink" title="Concurrency"></a>Concurrency</h3><p>那我們換一個想法，當我們不增加一個出貨站和一台貨車時，我們能怎麼做呢？<br>我們可以增加3位工作人員，讓他們各分其職，<br>有一位負責在出貨站出貨、而另一位則在貨車前面上貨，而另外兩位則負責推車。<br>基本上沒有工作人員在做重複的事情，而是有組織地讓每一個工作人員分工合作，<br>這就是 Concurrency。</p>
-<img src="/2023/12/23/golang/concurrency/concurrency.png" class="" title="This is an concurrency image">
-
-
-<h3 id="Concurrency-vs-Parallelism"><a href="#Concurrency-vs-Parallelism" class="headerlink" title="Concurrency vs Parallelism"></a>Concurrency vs Parallelism</h3><p>透過上述的例子可以看到 Parallelism 是通過加大資源在同一時間平行化地來執行任務，<br>而 Concurrency 則是有結構性、組織化的來管理和執行任務。<br>因此可以說 Concurrency 並不是 Parallelism，<br>而在 Go 中，我們使用 Goroutine 和 Channel 就是要透過 Concurrency 來設計你的任務，<br>藉此能負載高吞吐量的環境。</p>
-<h2 id="WaitGroup"><a href="#WaitGroup" class="headerlink" title="WaitGroup"></a>WaitGroup</h2><p>接下來我們來實作一下 Go 中的 Concurrency，<br>我們可以使用 GoRoutine，也就是另外開輕量化的 thread 來執行一項任務。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 0~100 都有</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/L3NOwX3tpdn">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>在上面的程式碼中，我們啟動了一百條的 GoRoutine 來增加 counter，<br>在你的想像中，最後所輸出的結果也應該都是 100，<br>但其實不然，因為 Main GoRoutine 並不會等待所有的 GoRoutine 執行完才結束，<br>所以我們可以使用 WaitGroup 讓 Main GoRoutine 等待到所有的 GoRoutine 都執行完成才結束。</p>
-<h3 id="使用-sync-WaitGroup"><a href="#使用-sync-WaitGroup" class="headerlink" title="使用 sync.WaitGroup"></a>使用 sync.WaitGroup</h3><p>接下來我們在剛剛的程式碼中使用 sync.WaitGroup() 的三個方法來協調 Main Goroutine 和 Sub Goroutine。</p>
-<ul>
-<li>wg.Add() : 表示有多少條的 Goroutine 需要等待</li>
-<li>wg.Done() : 結束 Sub Goroutine</li>
-<li>wg.Wait() : 通知 Main Goroutine 開始等待</li>
-</ul>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/swYSpV_efP7">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="Race-Condition"><a href="#Race-Condition" class="headerlink" title="Race Condition"></a>Race Condition</h2><p>在剛剛所示範的程式碼中，其實存在了一個 Bug，也就是在 Concurrency 中常常會遇到的問題：Race Condition。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			v := counter</span><br><span class="line">			runtime.Gosched() <span class="comment">// 暫緩該 GoRoutine 讓其他的 Goroutine 也開始執行</span></span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 0~100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/D6H0Sx2Yyqu">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>在上面的程式碼中，我們加上 <code>runtime.Goshced()</code> 的目的是讓 Race Condition 的問題凸顯出來，<br>此時可以在去執行程式，就會發現每次的執行結果都不同，這是因為每一條 Goroutine 都在爭搶 <code>counter</code> 這個共享變數，<br>第一條 Goroutine 讀取 <code>counter</code> 是 0、第二條 Goroutine 讀取 <code>counter</code> 也是 0，兩者在寫入值也都會將 <code>counter</code> 寫成 1，<br>並不是我們預期的結果，也是因為 Race Condition 所導致的結果。</p>
-<blockquote>
-<p>使用 go run -race main.go 可以判斷程式是否有 Race condition</p>
-</blockquote>
-<p>因此我們有兩個方法可以來避免 Race Condition 的發生，分別是 Mutex 和 Atomic。</p>
-<h3 id="Mutex"><a href="#Mutex" class="headerlink" title="Mutex"></a>Mutex</h3><p>我們可以使用 sync.Mutex 來保護共享變數，在 <code>counter</code> 被讀取和寫入的期間，<br>我們提供一個鎖來確保在某個時間段只有一個 GoRoutine 能對其讀取和寫入，<br>其他的 GoRoutine 必須等待鎖釋放後取得鎖才能執行。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	counter := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> mu sync.Mutex</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			mu.Lock() <span class="comment">// 上鎖</span></span><br><span class="line">			v := counter</span><br><span class="line">			runtime.Gosched()</span><br><span class="line">			v++</span><br><span class="line">			counter = v</span><br><span class="line">			mu.Unlock() <span class="comment">// 解鎖</span></span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter) <span class="comment">// 100</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/bml3sUxSB0e">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>此時我們可以再透過 <code>go run -race main.go</code> 來驗證沒有 Race Condition 發生，並且程式的執行結果也都會為 100。</p>
-<h3 id="Atomic"><a href="#Atomic" class="headerlink" title="Atomic"></a>Atomic</h3><p>除了 sync.Mutex 之外，我們也能使用 atomic 來確保當有一條GoRoutine <br>在讀取和寫入 <code>counter</code> 時，並不會被其他的 GoRoutine 所干擾，<br>藉此避免 Race Condition 的發生。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;CPUs:\t&quot;</span>, runtime.NumCPU())</span><br><span class="line">	fmt.Println(<span class="string">&quot;Goroutines:\t&quot;</span>, runtime.NumGoroutine())</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> counter <span class="type">int64</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> gs = <span class="number">100</span></span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(gs)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; gs; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			atomic.AddInt64(&amp;counter, <span class="number">1</span>)</span><br><span class="line">			runtime.Gosched()</span><br><span class="line">			wg.Done()</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	wg.Wait()</span><br><span class="line">	fmt.Println(<span class="string">&quot;count:&quot;</span>, counter)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/jRjA4hCHp8I">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>此時我們可以再透過 <code>go run -race main.go</code> 來驗證沒有 Race Condition 發生，並且程式的執行結果也都會為 100。</p>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>本篇文章主要說明了 Concurrency 的概念與 Parallelism 的一些差別之處，兩者看似很像但其中的概念卻不同。<br>另外也說明了如何使用 WaitGroup、Mutex 和 Atomic 來實作 Go 的 Concurrency。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://go.dev/blog/waza-talk">Concurrency is not parallelism</a></li>
-<li><a target="_blank" rel="noopener" href="https://go.dev/talks/2012/waza.slide#1">Concurrency is not parallelism - Slides</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/23/golang/concurrency/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1230,7 +861,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 10:36:41" itemprop="dateModified" datetime="2024-01-06T10:36:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:43:40" itemprop="dateModified" datetime="2024-02-10T09:43:40+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1253,197 +884,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>當我們在建立 RabbitMQ 的物件時，像是 Exchange、Queue 或 Binding，<br>我們可能會需要設一些參數上去，像是 message-ttl 或 max-length 等等。<br>而這些參數通常會需要在 runtime 期間可以被改動的，<br>所以我們會使用 Policy 來配置這些參數，這也是 RabbitMQ 官方所推薦的作法。<br>這篇文章會介紹這些參數的用途和如何使用 Policy 進行配置。</p>
-<blockquote>
-<p>以 Queue 來說，如果建立時有綁定 message-ttl 就代表無法更改值，除非將 Queue 砍掉在重建。</p>
-</blockquote>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Exchange</li>
-<li>Queue </li>
-<li>Binding</li>
-<li>閥值類參數的建議</li>
-</ul>
-<h2 id="Exchange"><a href="#Exchange" class="headerlink" title="Exchange"></a>Exchange</h2><p>Exchange 的參數可以劃分為靜態參數和可選性參數，<br>而可選性參數都建議都使用 Policy 來配置，<br>因為如果建立時就配置可選性參數，就會需要刪除物件才能修改參數的設定。</p>
-<h3 id="靜態參數"><a href="#靜態參數" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>type</td>
-<td>Exchange 的類型，像是 direct、fanout、topic 和 header</td>
-<td></td>
-</tr>
-<tr>
-<td>durable</td>
-<td>broker 重新啟動後仍然存在</td>
-<td></td>
-</tr>
-<tr>
-<td>auto_delete</td>
-<td>當沒有 Queue 與 Exchange 做 binding 時會自動刪除</td>
-<td>false</td>
-</tr>
-<tr>
-<td>internal</td>
-<td>Exchange 不能接收發送者的訊息，只能在 broker 內部用來交換訊息</td>
-<td>false</td>
-</tr>
-</tbody></table>
-<h3 id="可選性參數"><a href="#可選性參數" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>alternate-exchange</td>
-<td>當訊息無法被轉到對應的Queue時，訊息可以轉到替代的 Exchange</td>
-<td></td>
-</tr>
-</tbody></table>
-<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><p>至於 Queue 一樣也可以分為靜態參數和可選性參數，<br>而可選性參數都建議都使用 Policy 來配置，<br>因為如果建立時就配置可選性參數，就會需要刪除物件才能修改參數的設定。</p>
-<h3 id="靜態參數-1"><a href="#靜態參數-1" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>durable</td>
-<td>broker 重新啟動後仍然存在</td>
-<td></td>
-</tr>
-<tr>
-<td>auto_delete</td>
-<td>當沒有 Binding 也沒有消費者連接時就會自動刪除</td>
-<td>false</td>
-</tr>
-</tbody></table>
-<h3 id="可選性參數-1"><a href="#可選性參數-1" class="headerlink" title="可選性參數"></a>可選性參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>x-message-ttl</td>
-<td>訊息能在 Queue 裏存活的時間，如果時間超過，訊息就會被轉至到 DLQ 或刪除。另外如果訊息的狀態已經變成　<code>unacknowledge</code> 就不會計算 ttl</td>
-<td></td>
-</tr>
-<tr>
-<td>x-expires</td>
-<td>如果 Queue 在時間內都沒有被使用到，則 Queue 會被自動刪除</td>
-<td></td>
-</tr>
-<tr>
-<td>x-max-length</td>
-<td>訊息在 Queue 裏的最大存放數量，如果訊息的狀態已經變成　<code>unacknowledge</code> 則不在此列</td>
-<td></td>
-</tr>
-<tr>
-<td>x-max-length-bytes</td>
-<td>訊息在 Queue 裏的最大存放空間，如果訊息的狀態已經變成　<code>unacknowledge</code> 則不在此列</td>
-<td></td>
-</tr>
-<tr>
-<td>x-overflow</td>
-<td>當 x-max-length 或 x-max-length-bytes 的條件達成時，Queue 對接收的訊息所做出的行為，可以分為 drop-head (最舊的會被移除)、reject-publish (發送端會發送失敗) 和 reject-publish-dlx (發送失敗被轉移到 DLQ)</td>
-<td>drop-head</td>
-</tr>
-<tr>
-<td>x-dead-letter-exchange</td>
-<td>當訊息被 rejected 或過期時，要經由哪一個 Exchange 做轉移</td>
-<td></td>
-</tr>
-<tr>
-<td>x-dead-letter-routing-key</td>
-<td>當訊息被 rejected 或過期時，用來轉移 DLQ 的鍵值</td>
-<td></td>
-</tr>
-<tr>
-<td>x-queue-mode</td>
-<td>訊息要儲存在 Memory 還是 Disk，可以分為 default(memory) 和 lazy(disk)</td>
-<td>default</td>
-</tr>
-<tr>
-<td>x-queue-type</td>
-<td>Queue 的類型，可以分為 classic 和 quorum</td>
-<td>classic</td>
-</tr>
-</tbody></table>
-<h3 id="Policy-額外能設定的參數"><a href="#Policy-額外能設定的參數" class="headerlink" title="Policy 額外能設定的參數"></a>Policy 額外能設定的參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>delivery-limit</td>
-<td>當訊息沒有被 RabbitMQ 傳遞成功時，RabbiMQ 嘗試傳遞的最大次數，避免發生 Poison Message 的現象，也就是當消費者消費訊息失敗，訊息回到 Queue，RabbitMQ又在傳遞給消費者，如此重複下去</td>
-<td></td>
-</tr>
-<tr>
-<td>dead-letter-strategy</td>
-<td>當訊息傳遞失敗或超過TTL，在傳遞給DLQ的策略，可以分為 at-most-once(訊息最多傳遞一次給DLQ) 和 at-least-once(訊息至少要傳遞給DLQ成功一次，必須搭配 overflow 的 reject-publish)</td>
-<td>at-most-once</td>
-</tr>
-</tbody></table>
-<h2 id="Binding"><a href="#Binding" class="headerlink" title="Binding"></a>Binding</h2><p>Binding 是用來配置 Exchange 和 Queue 的關係，<br>這一塊通常不需要使用 Policy 來配置可選性參數，<br>只需要在建立的時候指定 Exchange、Queue 和 RoutingKey。</p>
-<h3 id="靜態參數-2"><a href="#靜態參數-2" class="headerlink" title="靜態參數"></a>靜態參數</h3><table>
-<thead>
-<tr>
-<th>名稱</th>
-<th>用途</th>
-<th>預設值</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Exchange</td>
-<td>Exchange 的名稱</td>
-<td></td>
-</tr>
-<tr>
-<td>Queue</td>
-<td>Queue 的名稱</td>
-<td></td>
-</tr>
-<tr>
-<td>Routing Key</td>
-<td>路由的鍵值</td>
-<td></td>
-</tr>
-</tbody></table>
-<h2 id="設置閥值類參數的建議"><a href="#設置閥值類參數的建議" class="headerlink" title="設置閥值類參數的建議"></a>設置閥值類參數的建議</h2><p>前面我們提到了 Queue 的可選性參數，其中有三個參數分別是 x-message-ttl、x-max-length 和 x-max-length-bytes，<br>這三個可以歸類成閥值類的參數，代表我們需要依據系統來動態調整這些參數。<br>這邊提供一些調整參數時的準則當作參考:</p>
-<ul>
-<li>x-message-ttl<ul>
-<li>消費者行為: 如果消費者消費比較慢，則要將 ttl 設長一點</li>
-</ul>
-</li>
-<li>x-max-length<ul>
-<li>吞吐量大小: 計算 publising rate 和 consuming rate，如果生產者產製訊息比消費者更快，就需要更大的 x-max-length</li>
-</ul>
-</li>
-<li>x-max-length-bytes<ul>
-<li>訊息大小: 如果每一筆訊息的容量都偏大，就可以將 x-max-length-bytes 調高，以便負荷更多的訊息</li>
-</ul>
-</li>
-</ul>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在這篇文章我們詳細介紹了關於 Exchange、Queue 和 Binding 的參數，<br>並且還區分了靜態參數和可選性參數。<br>另外值得一提的是，使用 Policy 來配置可選性參數相當重要，<br>因為在系統運行時，我們不希望要刪除物件來修改參數，<br>一旦刪除了物件，不只會影響到服務的運行，還要重新配置 Exchange 和 Queue 的 Binding，一不小心就很容易出錯。<br>最後則提供了一些配置閥值類參數的建議。</p>
-<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.rabbitmq.com/parameters.html">Parameters and Policies</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/22/rabbitmq/parameters/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1505,7 +953,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:10" itemprop="dateModified" datetime="2024-02-10T09:41:10+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1532,38 +980,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>這篇文章主要會介紹甚麼是 JSON 以及我們如何在 golang 中有效的使用 Standard Library 的 JSON package 來轉換 struct 和 JSON。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>甚麼是 JSON</li>
-<li>使用 Standard Library JSON</li>
-<li>結論</li>
-</ul>
-<h2 id="甚麼是-JSON"><a href="#甚麼是-JSON" class="headerlink" title="甚麼是 JSON"></a>甚麼是 JSON</h2><p>JSON 全名為 JavaScript Object Notation，可用來做資料交換，<br>像現在最常使用的Restful API設計，基本上都是使用 JSON 來讓前後端交換資料。<br>這邊我們透過圖例來了解一下，<br>假設使用者想要查詢餐點的資料，此時就能透過瀏覽器上的前端發送請求到後端，<br>接著後端會從DB取得資料並將資料轉化成JSON的格式傳回給前端，因此前端就能將餐點的資料渲染在頁面上。</p>
-<img src="/2023/12/19/golang/json/json.png" class="" title="This is an JSON image">
-
-<h2 id="使用-Standard-Library-的-JSON-package"><a href="#使用-Standard-Library-的-JSON-package" class="headerlink" title="使用 Standard Library 的 JSON package"></a>使用 Standard Library 的 JSON package</h2><p>在剛剛介紹的範例中，<br>我們提到了是後端會將資料轉換成 JSON 的格式再傳回給前端，<br>這代表我們會在 golang 中會需要把 struct 轉換成 JSON，<br>而這部分的轉換在golang的標準函式庫就有提供了。<br>接下來我會說明 Marshal、Unmarshal 和 tags 的用法。</p>
-<h3 id="Marshal"><a href="#Marshal" class="headerlink" title="Marshal"></a>Marshal</h3><p><code>json.Marshal()</code> 是使用在想要將 struct 轉換成 JSON 時，<br>透過下面的程式碼可以看到當我們直接輸出 struct 時，並不符合 JSON 的格式，<br>因此我們就要透過標準函式庫將 struct 做轉換</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span></span><br><span class="line">	Price  <span class="type">int</span></span><br><span class="line">	Amount <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	o := order&#123;Name: <span class="string">&quot;Cheeseburger&quot;</span>, Price: <span class="number">120</span>, Amount: <span class="number">2</span>&#125;</span><br><span class="line"></span><br><span class="line">	bs, err := json.Marshal(o)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(o)</span><br><span class="line">	fmt.Println(<span class="type">string</span>(bs))</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br><span class="line"><span class="comment">// &#123;&quot;Name&quot;:&quot;Cheeseburger&quot;,&quot;Price&quot;:120,&quot;Amount&quot;:2&#125;</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/djRoX3ytjw0">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h3 id="Tags"><a href="#Tags" class="headerlink" title="Tags"></a>Tags</h3><p>在 JSON 中，通常我們都使用駝峰式來命名欄位，<br>但因為 <code>json.Marshal()</code> 需要丟入有 export 欄位的 struct，因此欄位都會是大寫開頭。<br>所以我們能透過 <code>tags</code> 來表示 struct 欄位所對應到的 JSON 欄位。<br>透過下方的範例可以看到我們會在每個欄位的後方加上 <code>json:&quot;xxx&quot;</code>，<br>這就代表該欄位在轉換成 JSON 的格式時會顯示的鍵值。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line">	Price  <span class="type">int</span>    <span class="string">`json:&quot;price&quot;`</span></span><br><span class="line">	Amount <span class="type">int</span>    <span class="string">`json:&quot;amount&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	o := order&#123;Name: <span class="string">&quot;Cheeseburger&quot;</span>, Price: <span class="number">120</span>, Amount: <span class="number">2</span>&#125;</span><br><span class="line"></span><br><span class="line">	bs, err := json.Marshal(o)</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br><span class="line"><span class="comment">// &#123;&quot;name&quot;:&quot;Cheeseburger&quot;,&quot;price&quot;:120,&quot;amount&quot;:2&#125;</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/TKHQvrowDWm">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<blockquote>
-<p>假設欄位非常多，當我們一個一個手key就會非常累，因此能使用 <a target="_blank" rel="noopener" href="https://transform.tools/json-to-go">JSON to GO</a> 工具來產生 tags 會更加輕鬆，當然也可以使用AI工具來產生，像是 ChatGPT 或 Copilot</p>
-</blockquote>
-<h3 id="Unmarshal"><a href="#Unmarshal" class="headerlink" title="Unmarshal"></a>Unmarshal</h3><p>那前面介紹完將 struct 轉換成 JSON，那當然也要能從 JSON 轉換回 struct，<br>這種場景通常發生在前端發送表單類的請求給後端，<br>因此後端就需要透過 <code>json.Unmarshal()</code> 來將 JSON 轉換成 struct。<br>透過下方的範例就可以看到實作方法，特別注意的是在調用 <code>json.Unmarshal()</code> 時，<br>我們要傳入指標，這樣資料才能被寫進去。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> order <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name   <span class="type">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line">	Price  <span class="type">int</span>    <span class="string">`json:&quot;price&quot;`</span></span><br><span class="line">	Amount <span class="type">int</span>    <span class="string">`json:&quot;amount&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	s := <span class="string">`&#123;&quot;name&quot;:&quot;Cheeseburger&quot;,&quot;price&quot;:120,&quot;amount&quot;:2&#125;`</span></span><br><span class="line"></span><br><span class="line">	bs := []<span class="type">byte</span>(s)</span><br><span class="line"></span><br><span class="line">	o := order&#123;&#125;</span><br><span class="line"></span><br><span class="line">	err := json.Unmarshal(bs, &amp;o)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Println(err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(o)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Output:</span></span><br><span class="line"><span class="comment">// &#123;Cheeseburger 120 2&#125;</span></span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/dkuT9Oa0gqH">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>在現今的 WEB 開發中，基本上 JSON 資料的處理是不可或缺的，因此學習如何使用 golang 中的標準函式庫相當重要，在看完這篇文章後，現在的你應該知道如何透過 <code>json.Marshal</code> 或 <code>json.Unmarshal</code> 來處理 JSON 資料。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/19/golang/json/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1625,7 +1049,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新於</span>
-      <time title="修改時間：2024-01-06 14:45:41" itemprop="dateModified" datetime="2024-01-06T14:45:41+08:00">2024-01-06</time>
+      <time title="修改時間：2024-02-10 09:41:07" itemprop="dateModified" datetime="2024-02-10T09:41:07+08:00">2024-02-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1648,74 +1072,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在這篇文章中，我們將深入探討 Golang 中的指標，這是系統開發和有效使用第三方 Library 的關鍵概念。<br>那如果是有接觸過 C 或 C++ 的讀者，相信都對「指標」並不陌生，反之，如果是寫其他程式語言的朋友，就能透過這篇文章來了解指標的概念和用法。<br>接下來我們會說明指標的概念和使用指標的方式，理解指標能讓你在使用 Golang 開發系統時更加得心應手。</p>
-<h2 id="目錄"><a href="#目錄" class="headerlink" title="目錄"></a>目錄</h2><ul>
-<li>Memory</li>
-<li>Pointer</li>
-<li>Reference Type</li>
-<li>Value &amp; Pointer Semantics </li>
-<li>Conclusion</li>
-</ul>
-<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>Memory 可以稱之為”內存“，而在 Golang 的程式中，下列這些 Values 都會存放在內存中，放置的地方又可分為 Stack 和 Heap。</p>
-<ul>
-<li>Variable: 變數</li>
-<li>Function Parameter: 傳入方法的參數</li>
-<li>Return Value: 回傳值</li>
-<li>Structs: 組合資料，類似於物件導向語言中的「類別」</li>
-<li>Slices, Maps and Channels: 動態的資料結構</li>
-<li>Constants: 常數</li>
-</ul>
-<p>接下來我們可以透過圖例來了解內存，<br>這邊以變數的例子來說明，當我們宣告了一個 int 的變數時，<br>Golang 就會幫這一個變數找一個家，也就是配置一個內存的地址，而地址裡面住著就會是你的變數值。</p>
-<img src="/2023/12/16/golang/pointers/memory.png" class="" title="This is an memory image">
-
-<h2 id="Pointers"><a href="#Pointers" class="headerlink" title="Pointers"></a>Pointers</h2><p>在前面的圖例中，我們可以了解到每一個變數都會有相對應的內存地址，<br>那指標就是用來表示內存的地址，接下來我們看程式的範例。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Variable</span></span><br><span class="line">	x := <span class="number">34</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x)   <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, &amp;x, &amp;x) <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Pointer</span></span><br><span class="line">	p := &amp;x</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, p, p)   <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, *p, *p) <span class="comment">// 34 int</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/wy2izn1qTQE">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>透過上面的程式可以看到我們會使用 <code>&amp;</code> 和 <code>*</code> 來取得內存地址或變數值。</p>
-<ul>
-<li><code>&amp;</code>: 使用變數值來取得內存地址</li>
-<li><code>*</code>: 使用內存地址來取得變數值</li>
-</ul>
-<h2 id="Reference-Type"><a href="#Reference-Type" class="headerlink" title="Reference Type"></a>Reference Type</h2><p>平常我們在處理 Primitive Type 像是 int 和 string，這些原始型別都是直接儲存「資料」本身，<br>如果要取得內存地址，我們必須使用 <code>&amp;</code> 來將其轉換成 Reference Type，像是 *int, *string。<br>因此可以說 Reference Type 就是用來儲存內存地址，藉此可以在函式之間傳遞內存地址，而讓函式裡面可以直接對原始資料做修改。<br>透過下方的圖例和程式就可以了解到，如果我們想讓某個函式能直接調整 x 的值時，就可以將指標當作參數傳入函式裡面。</p>
-<img src="/2023/12/16/golang/pointers/reference-type.png" class="" title="This is an reference type image">
-
-
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">changeX</span><span class="params">(p *<span class="type">int</span>)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	*p = <span class="number">78</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Variable</span></span><br><span class="line">	x := <span class="number">34</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x)   <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, &amp;x, &amp;x) <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Pointer</span></span><br><span class="line">	p := &amp;x</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, p, p)   <span class="comment">// 0x1400009c018 *int</span></span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, *p, *p) <span class="comment">// 34 int</span></span><br><span class="line">	fmt.Println(strings.Repeat(<span class="string">&quot;-&quot;</span>, <span class="number">10</span>))</span><br><span class="line"></span><br><span class="line">	changeX(p)</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%v\t%T\n&quot;</span>, x, x) <span class="comment">// 78 int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/Q-b2DQJsUyp">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>常用的 Reference Type 有：</p>
-<ul>
-<li>pointers</li>
-<li>slices</li>
-<li>maps</li>
-<li>channels</li>
-<li>functions</li>
-<li>interfaces</li>
-</ul>
-<h2 id="Value-amp-Pointer-Semantics"><a href="#Value-amp-Pointer-Semantics" class="headerlink" title="Value &amp; Pointer Semantics"></a>Value &amp; Pointer Semantics</h2><p>當我們要將資料(變數)傳入到函式時，在程式語言中有兩種方式，<br>一種是 Value Semantics(值語義)，也就是我們常聽到的 <code>Pass By Value</code>，<br>而 Pointer Semantics(指標語義)則為 <code>Pass By Reference</code>。</p>
-<h3 id="Value-Semantics"><a href="#Value-Semantics" class="headerlink" title="Value Semantics"></a>Value Semantics</h3><p>我們先來看一下值語義的程式範例：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span><span class="params">(a <span class="type">int</span>)</span></span> <span class="type">int</span> &#123;</span><br><span class="line">	a++</span><br><span class="line">	<span class="keyword">return</span> a</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	x := <span class="number">1</span></span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">	y := addOne(x)</span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line">	fmt.Println(y) <span class="comment">// 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/7syv5filSBc">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>透過圖可以看到當我們傳入 x 變數給函式時，就就會有新的內存地址儲存 a 的值，<br>直到函式執行完，才會將 a 的內存釋放，這就是 <code>Pass By Value</code>。</p>
-<img src="/2023/12/16/golang/pointers/value-semantics.png" class="" title="This is an value-semantics image">
-
-<h3 id="Pointer-Semantics"><a href="#Pointer-Semantics" class="headerlink" title="Pointer Semantics"></a>Pointer Semantics</h3><p>在說明指標語義前，有很重要的一點要先知道，就是所有的資料在 Golang 中傳遞都是 <code>Pass By Value</code>，<br>那為什麼在先前的範例中，我們還是可以透過指標來修改原始資料呢？<br>這是因為 Golang 會複製一份 Pointer 到新的內存地址，而這地址內所儲存的就是會是原始資料的地址，<br>因此我們可以修改到原始資料。<br>我們先來看一下程式範例：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span><span class="params">(a *<span class="type">int</span>)</span></span> &#123;</span><br><span class="line">	*a++</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	x := <span class="number">1</span></span><br><span class="line">	fmt.Println(x) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">	addOne(&amp;x)</span><br><span class="line">	fmt.Println(x) <span class="comment">// 2</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a target="_blank" rel="noopener" href="https://go.dev/play/p/eaiCas9w30Y">使用 GoPlayGround 看實際結果</a></p>
-</blockquote>
-<p>透過圖可以看到當 x 的指標被傳入到函式，就會有多一個複製的指標到新的內存地址，<br>而這地址內放的就會是原始資料的地址，藉此我們能修改原始資料。</p>
-<img src="/2023/12/16/golang/pointers/pointer-semantics.png" class="" title="This is an pointer-semantics image">
-
-<h3 id="Heap-and-Stack"><a href="#Heap-and-Stack" class="headerlink" title="Heap and Stack"></a>Heap and Stack</h3><p>在前面我們有提到在 Golang 中內存又可分為 Heap 和 Stack，<br>當我們執行多個 go routines 時就會有多個 Stack，每個 go routines 的區域變數就會是 <code>Value semantics</code>，而這些 go routines 所共享的資料就會放在 Heap，也就是透過 <code>Pointer Semantics</code> 去取得或修改資料。</p>
-<img src="/2023/12/16/golang/pointers/heap-stack.png" class="" title="This is an heap and stack image">
-
-<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>總結一下這篇文章的重點，我們了解到如何在 Golang 中使用 <code>&amp;</code>     或 <code>*</code> 來處理指標，也理解值語義和指標語義的差別之處。<br>善用指標能讓我們在使用 Golang 開發系統時更加得心應手，也能快速找到 Bug 和理解資料的流向。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/16/golang/pointers/#more" rel="contents">
+                閱讀全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
